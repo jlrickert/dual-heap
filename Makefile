@@ -1,37 +1,66 @@
-EXECUTABLE = dualheap
+PROGRAM = dualheap
 
-CC = g++
-CFLAGS = -g -Wall
+CXX = g++
+CXXFLAGS = -g -Wall
 
-SRCDIR := src
-TARGETDIR := target
-TARGET := $(TARGETDIR)/bin/$(EXECUTABLE)
+BIN = bin
+TEST = test
+SRC = src
+BUILD = build
 
-SOURCES := $(shell find $(SRCDIR) -name "*.cpp")
-OBJECTS := $(patsubst $(SRCDIR)/%,$(TARGETDIR)/%,$(SOURCES:.cpp=.o))
+################################################################################
+#### Build logic below
+####
+#### should not need to touch anything below this
+################################################################################
+SOURCES := $(shell find $(SRC) -name "*.cpp")
+OBJECTS := $(patsubst $(SRC)/%,$(BUILD)/%,$(SOURCES:.cpp=.o))
 INCLUDES := -Iinclude
 
-exe: $(TARGET)
+# build program and test program
+build: bin/$(PROGRAM) bin/test_$(PROGRAM)
+
+# compile program if out of date and run executable with arguments
+# example: `make exe arg1 arg2 arg3`
+exe: build
 	@$(TARGET) $(filter-out $@, $(MAKECMDGOALS))
 
-$(TARGET): $(OBJECTS)
-	@mkdir -p $(shell dirname $(TARGET))
-	@echo "Compiling $(TARGET)..."
-	@$(CC) $(CFLAGS) $^ -o $(TARGET)
+# links all objects and compiles to program
+bin/$(PROGRAM): $(OBJECTS)
+	@mkdir -p $(BIN)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ $(PROGRAM).cpp -o $@
 
-$(TARGETDIR)/%.o: $(SRCDIR)/%.cpp
-	@mkdir -p $(TARGETDIR)
+# compiles all c++ files to an object file
+$(BUILD)/%.o: $(SRC)/%.cpp
+	@mkdir -p $(BUILD)
 	@echo "Compiling $<..."
-	@$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-test:
-	@echo "TODO"
+########################################
+#### Test section
+########################################
+TEST_BUILD = $(BUILD)/test
+TEST_SOURCES = $(shell find $(TEST) -name "*.cpp")
+TEST_OBJECTS := $(patsubst $(TEST)/%,$(TEST_BUILD)/%,$(TEST_SOURCES:.cpp=.o))
+GTEST_CFLAGS = $(shell pkg-config --cflags gtest)
+GTEST_LIBS = $(shell pkg-config --libs gtest)
 
-doc:
-	@echo "TODO"
+bin/test_$(PROGRAM): $(TEST_OBJECTS) $(OBJECTS)
+	@mkdir -p $(BIN)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(GTEST_LIBS)
+
+$(TEST_BUILD)/%.o: $(TEST)/%.cpp
+	@mkdir -p $(TEST_BUILD)
+	@echo "Compiling $<..."
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $< $(GTEST_CFLAGS)
+
+########################################
+#### Utility section
+########################################
 
 clean:
-	rm -r $(TARGETDIR)
+	rm -r $(BUILD)
+	rm -r $(BIN)
 
 .PHONY: clean
 

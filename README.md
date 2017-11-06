@@ -1,6 +1,6 @@
 # CSCI 331- Dual Heap Project
 
-dual heap project
+Dual Heap project
 
 # Building
 
@@ -11,10 +11,15 @@ make build
 # Example Usage
 
 ```
-make exe [args]
+./bin/dualheap [args]
 ```
 
 # Running the tests
+
+## Dependencies
+
+- pkg-config
+- gtest
 
 ```
 make test
@@ -22,12 +27,7 @@ make test
 
 # Documentation
 
-build by running
-```
-make doc
-```
-
-View doc/index.html in browser.
+TODO
 
 # Contributing
 
