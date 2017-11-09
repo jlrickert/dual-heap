@@ -22,7 +22,7 @@ make build
 - gtest
 
 ```
-make test
+./bin/test_dualheap
 ```
 
 # Documentation

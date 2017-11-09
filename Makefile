@@ -26,9 +26,9 @@ exe: build
 	@$(TARGET) $(filter-out $@, $(MAKECMDGOALS))
 
 # links all objects and compiles to program
-bin/$(PROGRAM): $(OBJECTS)
+bin/$(PROGRAM): $(OBJECTS) $(PROGRAM).cpp
 	@mkdir -p $(BIN)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ $(PROGRAM).cpp -o $@
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@
 
 # compiles all c++ files to an object file
 $(BUILD)/%.o: $(SRC)/%.cpp
