@@ -2,15 +2,19 @@
 #include <string>
 // #include "lib.h"
 
-
 int main(int argc, char** argv) {
   (void) argc; (void) argv;
 
   try {
     Record rec(std::string("test/fixtures/data1.csv"));
-    std::vector<std::string> keys = rec.keys();
-    // for (std::vector<std::string>::const_iterator it = keys.begin(); it != keys.end(); ++it) {
-    //   std::cout << *it << std::endl;
+    std::vector<Key> keys = rec.keys();
+    Key full_name_key = rec.lookup_key("Full Name");
+    Record::Row row = rec.fetch(0);
+    Field field = row.fetch(full_name_key);
+    std::cout << field.str();
+    // rec.sort("file_name", std::vector<Key>(keys[0], keys[3]));
+    // for (std::vector<Record::Key>::const_iterator it = keys.begin(); it != keys.end(); ++it) {
+    //   std::cout << it->name << " " << it->type << std::endl;
     // }
   } catch (ErrorCode n) {
     switch (n) {
@@ -24,6 +28,10 @@ int main(int argc, char** argv) {
     }
     case INVALID_FIELD_TYPE: {
       std::cout << "Invalid field type" << std::endl;
+      break;
+    }
+    case KEY_ERROR: {
+      std::cout << "Invalid key" << std::endl;
       break;
     }
     }
