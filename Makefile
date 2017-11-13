@@ -1,6 +1,6 @@
 PROGRAM = dualheap
 
-CXX = g++
+CXX = g++-5
 CXXFLAGS = -g -Wall
 
 BIN = bin
@@ -55,9 +55,13 @@ $(TEST_BUILD)/%.o: $(TEST)/%.cpp
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $< $(GTEST_CFLAGS)
 
 ########################################
+#### Documentation section
+########################################
+docs:
+
+########################################
 #### Utility section
 ########################################
-
 clean:
 	rm -r $(BUILD)
 	rm -r $(BIN)
