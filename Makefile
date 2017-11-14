@@ -1,6 +1,6 @@
 PROGRAM = dualheap
 
-CXX = g++-5
+CXX = g++
 CXXFLAGS = -g -Wall
 
 BIN = bin
