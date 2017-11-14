@@ -18,12 +18,12 @@ OBJECTS := $(patsubst $(SRC)/%,$(BUILD)/%,$(SOURCES:.cpp=.o))
 INCLUDES := -Iinclude
 
 # build program and test program
-build: bin/$(PROGRAM) bin/test_$(PROGRAM)
+build: bin/$(PROGRAM)
 
 # compile program if out of date and run executable with arguments
 # example: `make exe arg1 arg2 arg3`
 exe: build
-	@$(TARGET) $(filter-out $@, $(MAKECMDGOALS))
+	@bin/$(PROGRAM) $(filter-out $@, $(MAKECMDGOALS))
 
 # links all objects and compiles to program
 bin/$(PROGRAM): $(OBJECTS) $(PROGRAM).cpp
