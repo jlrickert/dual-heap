@@ -3,17 +3,11 @@
 #include <sstream>
 #include "collection.h"
 
-template<typename Word>
-std::ostream& write_raw(std::ostream& outs, Word value);
-
-template<typename Word>
-static std::istream& read_raw(std::istream& ins, Word& value);
-
-Key parse_key(std::string raw, int pos);
-
 ////////////////////////////////////////////////////////////////////////////////
 // Collection class implementation section
 ////////////////////////////////////////////////////////////////////////////////
+Key parse_key(std::string raw, int pos);
+
 Collection::Collection(const std::string& file_name) : file_name(file_name) {
   this->init_file();
   this->init_keys();
@@ -62,6 +56,12 @@ void Collection::init_index() {
 }
 
 Collection::Record Collection::operator[](size_t row) {
+  // if (!(0 < row && row <= this->size())) {
+  if ( row >= this->size()) {
+    std::stringstream ss;
+    ss << "Record " << row << " doesn't exist.";
+    throw std::out_of_range(ss.str());
+  }
   size_t rrn = this->index->get(row);
   return Collection::Record(*this, rrn);
 }
@@ -76,6 +76,31 @@ size_t Collection::cur_pos() {
 
 void Collection::seek(size_t pos) {
   this->input.seekg(pos);
+}
+
+Key parse_key(std::string raw, int pos) {
+  for (size_t i = 0; i < raw.length() - 1; i += 1) {
+    if (raw[i] == ':') {
+      std::string key_name = raw.substr(0, i);
+      std::string type_string = raw.substr(i + 1);
+
+      // caps don't matter
+      std::transform(type_string.begin(), type_string.end(),
+                     type_string.begin(), ::toupper);
+
+      Key::Type type = Key::STRING;
+      if (type_string == "STR" || type_string == "STRING") {
+        type = Key::STRING;
+      } else if (type_string == "INT" || type_string == "INTEGER") {
+        type = Key::INTEGER;
+      }
+
+      return Key(pos, key_name, type);
+    }
+  }
+  std::stringstream ss;
+  ss << "\"" << raw << "\"" << " is not a valid syntax";
+  throw std::runtime_error(ss.str());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -133,14 +158,14 @@ Field Collection::Record::get(Key key) {
   Field::Data data;
   {
     switch (key.type) {
-    case Field::STRING: {
+    case Key::STRING: {
       // char* name = name = raw_string.c_str();
       std::string* str = new std::string(raw_string.c_str());
       Field::Data d = { .string=str };
       data = d;
       break;
     }
-    case Field::INTEGER:
+    case Key::INTEGER:
       std::stringstream ss;
       ss << raw_string;
       int x = 0;
@@ -150,7 +175,7 @@ Field Collection::Record::get(Key key) {
       break;
     }
   }
-  Field field(data, key.type);
+  Field field(data, key);
   return field;
 }
 
@@ -165,15 +190,15 @@ Field Collection::Record::operator[](Key key) {
 ////////////////////////////////////////////////////////////////////////////////
 // Field class implementation section
 ////////////////////////////////////////////////////////////////////////////////
-std::string Field::str() {
-  switch (type) {
-  case INTEGER: {
+std::string Field::str() const {
+  switch (this->key.type) {
+  case Key::INTEGER: {
     std::ostringstream convert;
     convert << this->data.integer;
     return convert.str();
    break;
   }
-  case STRING: {
+  case Key::STRING: {
     return std::string(this->data.string->c_str());
     break;
   }
@@ -185,14 +210,86 @@ std::string Field::str() {
 };
 
 Field::~Field() {
-  if (this->type == STRING) {
+  if (this->key.type == Key::STRING) {
     delete this->data.string;
   }
+}
+
+void panic_on_bad_compare(const Field& f1, const Field& f2) {
+  if (f1.key.type != f2.key.type) {
+    std::stringstream ss;
+    ss << "Fields " << f1.key.name << " and " << f2.key.name
+      << " Cannot be logically compared for order";
+    throw std::logic_error(ss.str());
+  }
+}
+
+bool Field::operator<(const Field& other) const {
+  panic_on_bad_compare(*this, other);
+  switch (this->key.type) {
+  case Key::INTEGER: {
+    return this->data.integer < other.data.integer;
+    break;
+  }
+  case Key::STRING: {
+    return *(this->data.string) < *(other.data.string);
+    break;
+  }
+  }
+  throw std::logic_error("This should be impossible.");
+}
+
+bool Field::operator>(const Field& other) const {
+  panic_on_bad_compare(*this, other);
+
+  switch (this->key.type) {
+  case Key::INTEGER: {
+    return this->data.integer > other.data.integer;
+    break;
+  }
+  case Key::STRING: {
+    return *(this->data.string) > *(other.data.string);
+    break;
+  }
+  }
+  throw std::logic_error("This should be impossible.");
+}
+
+bool Field::operator<=(const Field& other) const {
+  return !(*this > other);
+}
+
+bool Field::operator>=(const Field& other) const {
+  return !(*this < other);
+}
+
+bool Field::operator==(const Field& other) const {
+  panic_on_bad_compare(*this, other);
+  if (this->key.type == other.key.type) {
+    switch (this->key.type) {
+    case Key::INTEGER: {
+      return this->data.integer == other.data.integer;
+      break;
+    }
+    case Key::STRING: {
+      return *(this->data.string) == *(other.data.string);
+      break;
+    }
+    }
+    return true;
+  }
+  return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Index class implementation section
 ////////////////////////////////////////////////////////////////////////////////
+template<typename Word>
+std::ostream& write_raw(std::ostream& outs, Word value);
+
+template<typename Word>
+static std::istream& read_raw(std::istream& ins, Word& value);
+
 Index* Index::from_csv(std::string file_name) {
   std::string output_file_name; {
     std::stringstream ss;
@@ -281,9 +378,6 @@ size_t Index::size() const {
   return this->size_;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Utility section
-////////////////////////////////////////////////////////////////////////////////
 template<typename Word>
 std::ostream& write_raw(std::ostream& outs, Word value) {
   for (size_t size = sizeof(Word); size; --size, value >>= 8) {
@@ -301,29 +395,4 @@ std::istream& read_raw(std::istream& ins, Word& value) {
     value |= byte;
   }
   return ins;
-}
-
-Key parse_key(std::string raw, int pos) {
-  for (size_t i = 0; i < raw.length() - 1; i += 1) {
-    if (raw[i] == ':') {
-      std::string key_name = raw.substr(0, i);
-      std::string type_string = raw.substr(i + 1);
-
-      // caps don't matter
-      std::transform(type_string.begin(), type_string.end(),
-                    type_string.begin(), ::toupper);
-
-      Field::Type type = Field::STRING;
-      if (type_string == "STR" || type_string == "STRING") {
-        type = Field::STRING;
-      } else if (type_string == "INT" || type_string == "INTEGER") {
-        type = Field::INTEGER;
-      }
-
-      return Key(pos, key_name, type);
-    }
-  }
-  std::stringstream ss;
-  ss << "\"" << raw << "\"" << " is not a valid syntax";
-  throw std::runtime_error(ss.str());
 }
