@@ -16,27 +16,25 @@ struct Field {
   } type;
   const union Data {
     int integer;
-    char* string;
+    std::string* string;
   } data;
   Field(Data data, Type type) : type(type), data(data) {}
+  ~Field();
   std::string str();
-
-  // c++11 stuff :(
-  // Field(std::string str) : type(STRING), data({ .string=str.c_str() }) {}
-  // Field(int i) : type(STRING), data({ .integer=i }) {}
 };
 
 struct Key {
-  const int pos;  // TODO: this should be part of record
+  const size_t pos;  // TODO: this should be part of record
   const std::string name;
   const Field::Type type;
-  Key(int pos, std::string name, Field::Type type)
+  Key(size_t pos, std::string name, Field::Type type)
     : pos(pos), name(name), type(type) {}
   Key(const Key& other) : pos(other.pos), name(other.name), type(other.type) {}
 };
 
 class Index {
 public:
+  typedef size_t Word;
   static Index* from_csv(std::string file_name);
   size_t get(size_t i);
   size_t operator[](size_t i);

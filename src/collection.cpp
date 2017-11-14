@@ -99,19 +99,23 @@ Field Collection::Record::get(Key key) {
   size_t end = this->offset;
   { // seek position of field within record
     char ch;
-    size_t pos = key.pos;
     size_t count = 0;
 
-    while (count < pos) {
-      this->collection.input.get(ch);
-      if (ch == ',' || this->collection.input.eof() || ch == '\n') {
-        begin = end + 1;
-        end = this->collection.cur_pos() - 1;
+    while (this->collection.input.get(ch)) {
+      if (ch == DELIM || ch == '\n') {
         count += 1;
+        int pos = this->collection.input.tellg();
+
+        begin = end;
+        end = pos;
+        if (count == key.pos) {
+          end -= 1;
+          break;
+        }
       }
     }
   }
-  std::cout << begin << " " << end << std::endl;
+  // std::cout << begin << " " << end << std::endl;
 
   std::string raw_string;
   {  // read raw value of field
@@ -119,18 +123,20 @@ Field Collection::Record::get(Key key) {
     std::ostringstream ss;
     char ch;
     while (this->collection.input.get(ch)) {
-      ss << ch;
       if (ch == DELIM || ch == '\n') break;
+      else ss << ch;
     }
     raw_string = ss.str();
   }
+  // std::cout << raw_string << std::endl;
 
   Field::Data data;
   {
     switch (key.type) {
     case Field::STRING: {
       // char* name = name = raw_string.c_str();
-      Field::Data d = { .string=const_cast<char*>(raw_string.c_str()) };
+      std::string* str = new std::string(raw_string.c_str());
+      Field::Data d = { .string=str };
       data = d;
       break;
     }
@@ -168,7 +174,7 @@ std::string Field::str() {
    break;
   }
   case STRING: {
-    return std::string(this->data.string);
+    return std::string(this->data.string->c_str());
     break;
   }
   default:
@@ -178,6 +184,12 @@ std::string Field::str() {
   return std::string("This is impossible");
 };
 
+Field::~Field() {
+  if (this->type == STRING) {
+    delete this->data.string;
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Index class implementation section
 ////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +197,7 @@ Index* Index::from_csv(std::string file_name) {
   std::string output_file_name; {
     std::stringstream ss;
     ss << "tmp/index";
-    output_file_name= ss.str();
+    output_file_name = ss.str();
   }
 
   std::fstream input, output;
@@ -206,9 +218,9 @@ Index* Index::from_csv(std::string file_name) {
   }
 
   // save a spot for size;
-  output.seekp(sizeof(size_t));
+  output.seekp(sizeof(Word));
 
-  size_t size = 0;  // keep track of count of number of records
+  size_t size = 0;  // keep track of count of records
   { // fill output with offsets
     char ch;
     size_t cur = input.tellg();
@@ -220,7 +232,7 @@ Index* Index::from_csv(std::string file_name) {
       }
       if (ch == '\n' && count >= key_count - 1) {
         size += 1;
-        write_raw<size_t>(output, cur);
+        write_raw<Word>(output, cur);
         cur = input.tellg();
         count = 0;
       }
@@ -229,7 +241,7 @@ Index* Index::from_csv(std::string file_name) {
 
   { // write number of records at first byte
     output.seekp(0);
-    write_raw<size_t>(output, size);
+    write_raw<Word>(output, size);
   }
 
   output.sync();
@@ -242,7 +254,7 @@ Index::Index(std::string file_name) : file_name(file_name) {
   { // get record count from beginning of file
     size_t size = 0;
     this->stream.seekg(0);
-    read_raw<size_t>(this->stream, size);
+    read_raw<Word>(this->stream, size);
     this->size_ = size;
   }
 };
@@ -254,9 +266,10 @@ Index::~Index() {
 }
 
 size_t Index::get(size_t i) {
-  this->stream.seekg(i * sizeof(size_t));
-  size_t offset = 0;
-  read_raw(this->stream, offset);
+  int count_offset = sizeof(Word);
+  this->stream.seekg(i * sizeof(Word) + count_offset);
+  Word offset;
+  read_raw<Word>(this->stream, offset);
   return offset;
 }
 
