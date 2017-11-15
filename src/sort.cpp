@@ -92,30 +92,30 @@ bool compare(T a, T b) {
 }
 
 void heapify(int heap[], size_t size) {
-  if (size < 1) {
+  if (size <= 1) {
     return;
-  }
-  if (size < 2 && heap[1] < heap[0]) {
+  } else if (size <= 2 && compare<int>(heap[1], heap[0])) {
     int temp = heap[0];
     heap[0] = heap[1];
     heap[1] = temp;
     return;
   }
-  for (size_t i = size/2; i >= 2; i -=1) {
-    int parent = heap[i];
+  for (size_t i = size/2; i >= 1; i -=1) {
+    int parent = heap[i - 1];
     int left = heap[i * 2 - 1];
 
-    if (i * 2 < size) {
+    if (i * 2 >= size) {
       if (compare<int>(left, parent)) {
-        heap[i] = left;
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
       }
     } else {
       int right = heap[i * 2];
       if (compare<int>(left, right) && compare<int>(left, parent)) {
-        heap[parent] = left;
+        heap[i - 1] = left;
         heap[i * 2 - 1] = parent;
       } else if (compare<int>(right, left) && compare<int>(right, parent)) {
-        heap[parent] = right;
+        heap[i - 1] = right;
         heap[i * 2] = parent;
       }
     }
@@ -135,19 +135,42 @@ std::vector<int> sort(std::vector<int> vec) {
       for (size_t i = 0; i < vec.size(); i += 1) {
         if (size < heap_size) {
           heap[size] = vec[i];
-          heapify(heap, size);
           size += 1;
+          pending += 1;
+          heapify(heap, pending);
           continue;
         }
 
-        int item = heap[0];                  // get smallest item in heap
-        heap[0] = heap[size - pending - 1];  // move last in heap into beginning
-        heap[size - pending - 1] = heap[i];  // move in new item to the end
-        heapify(heap, size - pending);       // heapify
+        std::cout << "Pending=" << pending << ", Next=" << vec[i] << std::endl;
+        std::cout << "Initial: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
 
-        if (item < vec[i]) {
-          pending += 1;
+        heapify(heap, pending);
+        std::cout << "Heap: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+
+        int item = heap[0];
+        std::cout << "Select: (" << heap[0] << ") " << heap[1] << " " << heap[2] << std::endl;
+        buffer.push_back(item);              // push item to buffer
+
+
+        heap[0] = heap[pending - 1];  // move last item in heap into
+        heap[pending - 1] = vec[i];   // move in new item to the end
+        std::cout << "Swap: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+
+        { // Mark pending positions if necessary
+          if (vec[i] < item) {
+            pending -= 1;
+          }
+          if (!pending) {
+            // mark spot
+            pending = heap_size;
+          }
         }
+        std::cout << std::endl;
+      }
+      for (size_t i = size; i > 0; i -= 1) {
+        heapify(heap, size);
+        int item = heap[0];
+        heap[0] = heap[size - 1];
         buffer.push_back(item);
       }
     }
