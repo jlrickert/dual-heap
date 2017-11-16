@@ -341,6 +341,10 @@ bool Field::operator==(const Field& other) const {
   return false;
 }
 
+bool compare(Collection& collection, size_t a, size_t b,
+             std::vector<Key> keys);
+void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key> keys);
+
 void Collection::sort(std::string output_file, std::vector<std::string> keys) {
   std::vector<Key> k;
   for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++) {
@@ -348,44 +352,6 @@ void Collection::sort(std::string output_file, std::vector<std::string> keys) {
     k.push_back(key);
   }
   return this->sort(output_file, k);
-}
-
-bool compare(Collection& collection, size_t a, size_t b,
-             std::vector<Key> keys) {
-  Collection::Record rec_a = collection[a];
-  Collection::Record rec_b = collection[b];
-  return rec_a.lt(rec_b, keys);
-}
-
-void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key> keys) {
-  if (size <= 1) {
-    return;
-  } else if (size <= 2 && compare(collection, heap[1], heap[0], keys)) {
-    size_t temp = heap[0];
-    heap[0] = heap[1];
-    heap[1] = temp;
-    return;
-  }
-  for (size_t i = size/2; i >= 1; i -=1) {
-    size_t parent = heap[i - 1];
-    size_t left = heap[i * 2 - 1];
-
-    if (i * 2 >= size) {
-      if (compare(collection, left, parent, keys)) {
-        heap[i - 1] = left;
-        heap[i * 2 - 1] = parent;
-      }
-    } else {
-      size_t right = heap[i * 2];
-      if (compare(collection, left, right, keys) && compare(collection, left, parent, keys)) {
-        heap[i - 1] = left;
-        heap[i * 2 - 1] = parent;
-      } else if (compare(collection, right, left, keys) && compare(collection, right, parent, keys)) {
-        heap[i - 1] = right;
-        heap[i * 2] = parent;
-      }
-    }
-  }
 }
 
 void Collection::sort(std::string output_file, std::vector<Key> keys) {
@@ -452,6 +418,9 @@ std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
     std::cout << std::endl;
   }
 
+
+  { // so something with offsets
+  }
   return buffer;
 }
 
@@ -465,6 +434,45 @@ std::fstream& Collection::kway_merge(std::fstream& buffer, std::fstream& output,
   output.flush();
   return output;
 }
+
+bool compare(Collection& collection, size_t a, size_t b,
+             std::vector<Key> keys) {
+  Collection::Record rec_a = collection[a];
+  Collection::Record rec_b = collection[b];
+  return rec_a.lt(rec_b, keys);
+}
+
+void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key> keys) {
+  if (size <= 1) {
+    return;
+  } else if (size <= 2 && compare(collection, heap[1], heap[0], keys)) {
+    size_t temp = heap[0];
+    heap[0] = heap[1];
+    heap[1] = temp;
+    return;
+  }
+  for (size_t i = size/2; i >= 1; i -=1) {
+    size_t parent = heap[i - 1];
+    size_t left = heap[i * 2 - 1];
+
+    if (i * 2 >= size) {
+      if (compare(collection, left, parent, keys)) {
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
+      }
+    } else {
+      size_t right = heap[i * 2];
+      if (compare(collection, left, right, keys) && compare(collection, left, parent, keys)) {
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
+      } else if (compare(collection, right, left, keys) && compare(collection, right, parent, keys)) {
+        heap[i - 1] = right;
+        heap[i * 2] = parent;
+      }
+    }
+  }
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Index class implementation section
