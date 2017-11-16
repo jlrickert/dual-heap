@@ -343,7 +343,13 @@ bool Field::operator==(const Field& other) const {
 
 bool compare(Collection& collection, size_t a, size_t b,
              std::vector<Key> keys);
-void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key> keys);
+void heapify(Collection& collection, size_t heap[], size_t pending, std::vector<Key> keys);
+
+// TODO: move to a utility file
+template <typename T>
+std::string stringify(T array[], size_t size);
+template <typename T>
+std::string stringify(T array[], size_t begin, size_t size);
 
 void Collection::sort(std::string output_file, std::vector<std::string> keys) {
   std::vector<Key> k;
@@ -355,80 +361,164 @@ void Collection::sort(std::string output_file, std::vector<std::string> keys) {
 }
 
 void Collection::sort(std::string output_file, std::vector<Key> keys) {
-  std::ostringstream ss;
-  ss << "tmp/buffer";
-  std::string buffer_file_name = ss.str();
-  std::fstream buffer;
+  std::fstream buffer, offsets;
 
+  std::string buffer_file_name = "tmp/buffer";
   buffer.open(buffer_file_name.c_str(),
               buffer.binary | buffer.trunc | buffer.out | buffer.in);
-  this->replacement_selection_sort(buffer, keys);
-  buffer.flush();
+  if (!buffer.good()) {
+    std::ostringstream ss;
+    ss << "Could not open file " << buffer_file_name;
+    throw std::runtime_error(ss.str());
+  }
+
+  std::string offset_file_name = "tmp/offsets";
+  offsets.open(offset_file_name.c_str(),
+               buffer.binary | buffer.trunc | buffer.out | buffer.in);
+  if (!offsets.good()) {
+    std::ostringstream ss;
+    ss << "Could not open file " << offset_file_name;
+    throw std::runtime_error(ss.str());
+  }
 
   std::fstream output;
   output.open(output_file.c_str(), output.trunc | output.out);
-  output.flush();
-  this->kway_merge(buffer, output, keys);
+  if (!offsets.good()) {
+    std::ostringstream ss;
+    ss << "Could not open file " << output_file;
+    throw std::runtime_error(ss.str());
+  }
+
+  this->replacement_selection_sort(buffer, offsets, keys);
+  this->kway_merge(buffer, output, offsets, keys);
 }
 
 std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
+                                                     std::fstream& offsets,
                                                      std::vector<Key> keys) {
   size_t heap[Collection::HEAP_SIZE];
   buffer.seekg(0);
-  std::vector<std::pair<size_t, size_t> > offsets;  // pair of location and count
-  size_t size = 0;
-  size_t pending = 0;
-  size_t count = 0;
-  for (size_t i = 0; i < this->size(); i += 1) {
-    count += 1;
-    if (size < Collection::HEAP_SIZE) {
-      heap[size] = i;
-      size += 1;
-      pending += 1;
-      heapify(*this, heap, pending, keys);
-      continue;
+  offsets.seekg(0);
+
+  size_t size = 0;     // current count of elements in heap;
+  size_t pending = 0;  // artificial size of heap
+  size_t count = 0;    // number of elements in current bucket
+  size_t item;         // last item to be put into buffer
+  size_t row = 0;
+  for (; row < this->size(); row += 1) {
+    if (count == 0) {
+      std::cout << "New bucket." << std::endl;
     }
 
-    std::cout << "Pending=" << pending << ", Next=" << i << std::endl;
-    std::cout << "Initial: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
-    heapify(*this, heap, pending, keys);
+    { // initially fill the heap
+      if (size < Collection::HEAP_SIZE) {
+        heap[size] = row;
+        size += 1;
+        pending += 1;
+        heapify(*this, heap, pending, keys);
+        continue;
+      }
+    }
 
-    std::cout << "Heap: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+    { // Log current pass
+      std::cout << "Pending=" << pending << ", Bucket count=" << count << ", Next=" << row << std::endl;
+      std::cout << "Initial: " << stringify<size_t>(heap, size) << std::endl;
+    }
 
-    size_t item = heap[0];
-    std::cout << "Select: (" << heap[0] << ") " << heap[1] << " " << heap[2] << std::endl;
-    write_raw<size_t>(buffer, item);
+    { // heapify
+      heapify(*this, heap, pending, keys);
+      std::cout << "Heap: " << stringify<size_t>(heap, pending) << std::endl;
+    }
 
+    { // select value to put in buffer
+      item = heap[0];
+      count += 1;
+      std::cout << "Select: (" << heap[0] << ") " << stringify<size_t>(heap, 1, size) << std::endl;
+      write_raw<size_t>(buffer, item);
+    }
 
-    heap[0] = heap[pending - 1];  // move last item in heap into
-    heap[pending - 1] = i;        // move in new item to the end
-    std::cout << "Swap: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+    { // Swap in new incoming value
+      heap[0] = heap[pending - 1];  // move last item in heap into
+      heap[pending - 1] = row;      // move in new item to the end
+      std::cout << "Swap: " << stringify<size_t>(heap, size) << std::endl;
+    }
 
     { // Mark pending positions if necessary
-      if (compare(*this, i, item, keys)) { // compare here
+      if (compare(*this, row, item, keys)) { // check if incoming record is
+                                           // smaller than last value pushed to
+                                           // buffer.
+        // artificially reduce heap size
         pending -= 1;
       }
-      if (!pending) {
-        // mark spot
-        offsets.push_back(std::pair<size_t, size_t>(i, count));
+
+      if (pending == 0) {  // check if new bucket is needed
+        std::cout << "End of bucket. Writing out bucket size to " << count << "." << std::endl;
+        write_raw<short unsigned int>(offsets, count);
         count = 0;
-        pending = Collection::HEAP_SIZE;
+        pending = size;
       }
     }
     std::cout << std::endl;
   }
 
+  // write out remaining values
+  while (size > 0) {
+    if (count == 0) {
+      std::cout << "New bucket." << std::endl;
+    }
 
-  { // so something with offsets
+    { // log current pass
+      std::cout << "Pending=" << pending << std::endl;
+      std::cout << "Initial: " << stringify<size_t>(heap, size) << std::endl;
+    }
+
+    { // heapify
+      heapify(*this, heap, pending, keys);
+      std::cout << "Heap: " << stringify<size_t>(heap, size) << std::endl;
+    }
+
+    size_t item;
+    { // select value to put in buffer
+      item = heap[0];
+      count += 1;
+      std::cout << "Select: (" << heap[0] << ") " << stringify<size_t>(heap, 1, size) << std::endl;
+      write_raw<size_t>(buffer, item);
+    }
+
+    { // Swap in new incoming value
+      heap[0] = heap[pending - 1];
+      for (size_t i = pending; i < size; i += 1) {
+        heap[i - 1] = heap[i];
+      }
+      heap[pending - 1] = heap[size - 1]; //
+      size -= 1;
+      pending -= 1;
+      std::cout << "Swap: " << stringify(heap, size) << std::endl;
+    }
+
+    {
+      if (!pending) {  // reset pending heap size and write out offset
+        std::cout << "End of bucket. Writing out bucket size to " << count << "." << std::endl;
+        write_raw<short unsigned int>(offsets, count);
+        count = 0;
+        pending = size;
+      }
+    }
+    std::cout << std::endl;
   }
+
+  buffer.flush();
+  offsets.flush();
   return buffer;
 }
 
-std::fstream& Collection::kway_merge(std::fstream& buffer, std::fstream& output, std::vector<Key> keys) {
-  input.seekg(0);
+std::fstream& Collection::kway_merge(std::fstream& buffer, std::fstream& output,
+                                     std::fstream& offsets,
+                                     std::vector<Key> keys) {
+  buffer.seekg(0);
   output.seekg(0);
   std::string line;
-  while(getline(input, line)) {
+  while(getline(buffer, line)) {
     output << line;
   }
   output.flush();
@@ -584,4 +674,21 @@ std::istream& read_raw(std::istream& ins, Word& value) {
     value |= byte;
   }
   return ins;
+}
+
+template <typename T>
+std::string stringify(T array[], size_t size) {
+  return stringify<T>(array, 0, size);
+}
+
+template <typename T>
+std::string stringify(T array[], size_t begin, size_t size) {
+  std::ostringstream ss;
+  for (size_t i = begin; i < size; i += 1) {
+    ss << array[i];
+    if (i < size - 1) {
+      ss << " ";
+    }
+  }
+  return ss.str();
 }

@@ -264,8 +264,9 @@ private:
    */
   size_t cur_pos();
 
-  std::fstream& replacement_selection_sort(std::fstream& buffer, std::vector<Key> keys);
-  std::fstream& kway_merge(std::fstream& input, std::fstream& output, std::vector<Key> keys);
+  std::fstream& replacement_selection_sort(std::fstream& buffer, std::fstream& offsets, std::vector<Key> keys);
+  std::fstream& kway_merge(std::fstream& input, std::fstream& output,
+                           std::fstream& offsets, std::vector<Key> keys);
 
   /**
    * Initializes file by opening file-name
