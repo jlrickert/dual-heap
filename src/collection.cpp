@@ -3,6 +3,13 @@
 #include <sstream>
 #include "collection.h"
 
+template<typename Word>
+std::ostream& write_raw(std::ostream& outs, Word value);
+
+template<typename Word>
+static std::istream& read_raw(std::istream& ins, Word& value);
+
+
 ////////////////////////////////////////////////////////////////////////////////
 // Collection class implementation section
 ////////////////////////////////////////////////////////////////////////////////
@@ -55,9 +62,17 @@ void Collection::init_index() {
   this->index = Index::from_csv(this->file_name);
 }
 
+std::vector<std::string> Collection::keys() const {
+  std::vector<std::string> elements;
+  for (std::map<std::string, Key>::const_iterator it = this->keys_.begin();
+       it != this->keys_.end(); ++it) {
+    elements.push_back(it->first);
+  }
+  return elements;
+}
+
 Collection::Record Collection::operator[](size_t row) {
-  // if (!(0 < row && row <= this->size())) {
-  if ( row >= this->size()) {
+  if (row >= this->size()) {
     std::stringstream ss;
     ss << "Record " << row << " doesn't exist.";
     throw std::out_of_range(ss.str());
@@ -187,6 +202,51 @@ Field Collection::Record::operator[](Key key) {
   return this->get(key);
 }
 
+bool Collection::Record::lt(Collection::Record& other, std::vector<Key> keys) {
+  for (std::vector<Key>::iterator it = keys.begin(); it != keys.end(); ++it) {
+    if (this->get(*it) < other.get(*it)) {
+      return true;
+    } else if (this->get(*it) == other.get(*it)) {
+      continue;
+    } else {
+      return false;
+    }
+  }
+  return false;
+}
+
+bool Collection::Record::lte(Collection::Record& other, std::vector<Key> keys) {
+  return !this->gt(other, keys);
+}
+
+bool Collection::Record::gt(Collection::Record& other, std::vector<Key> keys) {
+  for (std::vector<Key>::iterator it = keys.begin(); it != keys.end(); ++it) {
+    if (this->get(*it) > other.get(*it)) {
+      return true;
+    } else if (this->get(*it) == other.get(*it)) {
+      continue;
+    } else {
+      return false;
+    }
+  }
+  return false;
+}
+
+bool Collection::Record::gte(Collection::Record& other, std::vector<Key> keys) {
+  return !this->lt(other, keys);
+}
+
+std::string Collection::Record::str() {
+  std::ostringstream ss;
+  ss << "Record(";
+  for (std::vector<std::string>::const_iterator it = this->collection.keys().begin();
+       it != this->collection.keys().end(); ++it) {
+    Field field = this->get(*it);
+    ss << *it << "=" << field.str();
+  }
+  return ss.str();
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Field class implementation section
 ////////////////////////////////////////////////////////////////////////////////
@@ -281,15 +341,134 @@ bool Field::operator==(const Field& other) const {
   return false;
 }
 
+void Collection::sort(std::string output_file, std::vector<std::string> keys) {
+  std::vector<Key> k;
+  for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++) {
+    Key key = this->keys_.find(*it)->second;
+    k.push_back(key);
+  }
+  return this->sort(output_file, k);
+}
+
+bool compare(Collection& collection, size_t a, size_t b,
+             std::vector<Key> keys) {
+  Collection::Record rec_a = collection[a];
+  Collection::Record rec_b = collection[b];
+  return rec_a.lt(rec_b, keys);
+}
+
+void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key> keys) {
+  if (size <= 1) {
+    return;
+  } else if (size <= 2 && compare(collection, heap[1], heap[0], keys)) {
+    size_t temp = heap[0];
+    heap[0] = heap[1];
+    heap[1] = temp;
+    return;
+  }
+  for (size_t i = size/2; i >= 1; i -=1) {
+    size_t parent = heap[i - 1];
+    size_t left = heap[i * 2 - 1];
+
+    if (i * 2 >= size) {
+      if (compare(collection, left, parent, keys)) {
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
+      }
+    } else {
+      size_t right = heap[i * 2];
+      if (compare(collection, left, right, keys) && compare(collection, left, parent, keys)) {
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
+      } else if (compare(collection, right, left, keys) && compare(collection, right, parent, keys)) {
+        heap[i - 1] = right;
+        heap[i * 2] = parent;
+      }
+    }
+  }
+}
+
+void Collection::sort(std::string output_file, std::vector<Key> keys) {
+  std::ostringstream ss;
+  ss << "tmp/buffer";
+  std::string buffer_file_name = ss.str();
+  std::fstream buffer;
+
+  buffer.open(buffer_file_name.c_str(),
+              buffer.binary | buffer.trunc | buffer.out | buffer.in);
+  this->replacement_selection_sort(buffer, keys);
+  buffer.flush();
+
+  std::fstream output;
+  output.open(output_file.c_str(), output.trunc | output.out);
+  output.flush();
+  this->kway_merge(buffer, output, keys);
+}
+
+std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
+                                                     std::vector<Key> keys) {
+  size_t heap[Collection::HEAP_SIZE];
+  buffer.seekg(0);
+  std::vector<std::pair<size_t, size_t> > offsets;  // pair of location and count
+  size_t size = 0;
+  size_t pending = 0;
+  size_t count = 0;
+  for (size_t i = 0; i < this->size(); i += 1) {
+    count += 1;
+    if (size < Collection::HEAP_SIZE) {
+      heap[size] = i;
+      size += 1;
+      pending += 1;
+      heapify(*this, heap, pending, keys);
+      continue;
+    }
+
+    std::cout << "Pending=" << pending << ", Next=" << i << std::endl;
+    std::cout << "Initial: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+    heapify(*this, heap, pending, keys);
+
+    std::cout << "Heap: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+
+    size_t item = heap[0];
+    std::cout << "Select: (" << heap[0] << ") " << heap[1] << " " << heap[2] << std::endl;
+    write_raw<size_t>(buffer, item);
+
+
+    heap[0] = heap[pending - 1];  // move last item in heap into
+    heap[pending - 1] = i;        // move in new item to the end
+    std::cout << "Swap: " << heap[0] << " " << heap[1] << " " << heap[2] << std::endl;
+
+    { // Mark pending positions if necessary
+      if (compare(*this, i, item, keys)) { // compare here
+        pending -= 1;
+      }
+      if (!pending) {
+        // mark spot
+        offsets.push_back(std::pair<size_t, size_t>(i, count));
+        count = 0;
+        pending = Collection::HEAP_SIZE;
+      }
+    }
+    std::cout << std::endl;
+  }
+
+  return buffer;
+}
+
+std::fstream& Collection::kway_merge(std::fstream& buffer, std::fstream& output, std::vector<Key> keys) {
+  input.seekg(0);
+  output.seekg(0);
+  std::string line;
+  while(getline(input, line)) {
+    output << line;
+  }
+  output.flush();
+  return output;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Index class implementation section
 ////////////////////////////////////////////////////////////////////////////////
-template<typename Word>
-std::ostream& write_raw(std::ostream& outs, Word value);
-
-template<typename Word>
-static std::istream& read_raw(std::istream& ins, Word& value);
-
 Index* Index::from_csv(std::string file_name) {
   std::string output_file_name; {
     std::stringstream ss;
@@ -377,7 +556,9 @@ size_t Index::operator[](size_t i) {
 size_t Index::size() const {
   return this->size_;
 }
-
+////////////////////////////////////////////////////////////////////////////////
+// Utility section
+////////////////////////////////////////////////////////////////////////////////
 template<typename Word>
 std::ostream& write_raw(std::ostream& outs, Word value) {
   for (size_t size = sizeof(Word); size; --size, value >>= 8) {

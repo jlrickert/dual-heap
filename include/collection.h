@@ -27,6 +27,7 @@ struct Field {
   } data;
   Key key;
   Field(Data data, Key key) : data(data), key(key) {}
+  Field(const Field& other) : data(other.data), key(other.key) {}
   ~Field();
   std::string str() const;
   bool operator<(const Field& other) const;
@@ -62,17 +63,25 @@ public:
     Field get(Key key);
     Field operator[](std::string key_name);
     Field operator[](Key key);
+    bool lt(Record& other, std::vector<Key> keys);
+    bool lte(Record& other, std::vector<Key> keys);
+    bool gt(Record& other, std::vector<Key> keys);
+    bool gte(Record& other, std::vector<Key> keys);
+    std::string str();
   private:
     friend class Collection;
     Record(Collection& collection, size_t offset);
     Collection& collection;
   };
 
+  const static size_t HEAP_SIZE = 3;
   const std::string file_name;
   Collection(const std::string& file_name);
+  Collection(const Collection& collection);
   ~Collection();
-  Collection sort(std::string str, std::vector<std::string> keys);
-  Collection sort(std::string str, std::vector<Key> keys);
+  void sort(std::string str, std::vector<std::string> keys);
+  void sort(std::string str, std::vector<Key> keys);
+  std::vector<std::string> keys() const;
   Record get(size_t row);
   Record operator[](size_t row);
   size_t size() const;
@@ -84,6 +93,9 @@ private:
 
   void seek(size_t pos);
   size_t cur_pos();
+
+  std::fstream& replacement_selection_sort(std::fstream& buffer, std::vector<Key> keys);
+  std::fstream& kway_merge(std::fstream& input, std::fstream& output, std::vector<Key> keys);
 
   void init_file();
   void init_keys();
