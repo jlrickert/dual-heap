@@ -131,9 +131,8 @@ Field Collection::Record::get(std::string key_name) {
 }
 
 Field Collection::Record::get(Key key) {
-  { // Seek record
-    this->collection.seek(this->offset);
-  }
+  // Seek record
+  this->collection.seek(this->offset);
 
   size_t begin = this->offset;
   size_t end = this->offset;
@@ -155,7 +154,6 @@ Field Collection::Record::get(Key key) {
       }
     }
   }
-  // std::cout << begin << " " << end << std::endl;
 
   std::string raw_string;
   {  // read raw value of field
@@ -168,15 +166,14 @@ Field Collection::Record::get(Key key) {
     }
     raw_string = ss.str();
   }
-  // std::cout << raw_string << std::endl;
 
   Field::Data data;
-  {
+  { // parse field data
     switch (key.type) {
     case Key::STRING: {
-      // char* name = name = raw_string.c_str();
       std::string* str = new std::string(raw_string.c_str());
-      Field::Data d = { .string=str };
+      Field::Data d;
+      d.string = str;
       data = d;
       break;
     }
@@ -185,7 +182,8 @@ Field Collection::Record::get(Key key) {
       ss << raw_string;
       int x = 0;
       ss >> x;
-      Field::Data d = {.integer=x};
+      Field::Data d;
+      d.integer = x;
       data = d;
       break;
     }
@@ -343,7 +341,8 @@ bool Field::operator==(const Field& other) const {
 
 bool compare(Collection& collection, size_t a, size_t b,
              std::vector<Key> keys);
-void heapify(Collection& collection, size_t heap[], size_t pending, std::vector<Key> keys);
+void heapify(Collection& collection, size_t heap[], size_t pending,
+             std::vector<Key> keys);
 
 // TODO: move to a utility file
 template <typename T>
