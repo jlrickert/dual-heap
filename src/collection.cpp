@@ -52,7 +52,8 @@ void Collection::init_keys() {
       std::string raw_key = line.substr(pos, offset);
       key_count += 1;
       Key key = parse_key(raw_key, key_count);
-      this->keys_.insert(key_pair_t(key.name, key));
+      this->keys_.push_back(key.name);
+      this->key_type_map.insert(key_pair_t(key.name, key));
       cp = i + 1;
     }
   }
@@ -62,13 +63,8 @@ void Collection::init_index() {
   this->index = Index::from_csv(this->file_name);
 }
 
-std::vector<std::string> Collection::keys() const {
-  std::vector<std::string> elements;
-  for (std::map<std::string, Key>::const_iterator it = this->keys_.begin();
-       it != this->keys_.end(); ++it) {
-    elements.push_back(it->first);
-  }
-  return elements;
+const std::vector<std::string>& Collection::keys() const {
+  return this->keys_;
 }
 
 Collection::Record Collection::operator[](size_t row) {
@@ -126,7 +122,7 @@ Collection::Record::Record(Collection& collection, size_t offset)
     collection(collection) {}
 
 Field Collection::Record::get(std::string key_name) {
-  Key key = this->collection.keys_.find(key_name)->second;
+  Key key = this->collection.key_type_map.find(key_name)->second;
   return Collection::Record::get(key);
 }
 
@@ -277,7 +273,7 @@ void panic_on_bad_compare(const Field& f1, const Field& f2) {
   if (f1.key.type != f2.key.type) {
     std::stringstream ss;
     ss << "Fields " << f1.key.name << " and " << f2.key.name
-      << " Cannot be logically compared for order";
+       << " Cannot be logically compared for order";
     throw std::logic_error(ss.str());
   }
 }
@@ -353,14 +349,14 @@ std::string stringify(T array[], size_t begin, size_t size);
 void Collection::sort(std::string output_file, std::vector<std::string> keys) {
   std::vector<Key> k;
   for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++) {
-    Key key = this->keys_.find(*it)->second;
+    Key key = this->key_type_map.find(*it)->second;
     k.push_back(key);
   }
   return this->sort(output_file, k);
 }
 
 void Collection::sort(std::string output_file, std::vector<Key> keys) {
-  std::fstream buffer, offsets;
+  std::fstream buffer;
 
   std::string buffer_file_name = "tmp/buffer";
   buffer.open(buffer_file_name.c_str(),
@@ -371,18 +367,11 @@ void Collection::sort(std::string output_file, std::vector<Key> keys) {
     throw std::runtime_error(ss.str());
   }
 
-  std::string offset_file_name = "tmp/offsets";
-  offsets.open(offset_file_name.c_str(),
-               buffer.binary | buffer.trunc | buffer.out | buffer.in);
-  if (!offsets.good()) {
-    std::ostringstream ss;
-    ss << "Could not open file " << offset_file_name;
-    throw std::runtime_error(ss.str());
-  }
+  std::vector<OffsetSize> offsets;
 
   std::fstream output;
   output.open(output_file.c_str(), output.trunc | output.out);
-  if (!offsets.good()) {
+  if (!output.good()) {
     std::ostringstream ss;
     ss << "Could not open file " << output_file;
     throw std::runtime_error(ss.str());
@@ -392,19 +381,17 @@ void Collection::sort(std::string output_file, std::vector<Key> keys) {
   this->kway_merge(buffer, output, offsets, keys);
 }
 
-std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
-                                                     std::fstream& offsets,
-                                                     std::vector<Key> keys) {
+std::fstream& Collection::replacement_selection_sort(
+    std::fstream& buffer, std::vector<OffsetSize>& offsets,
+    std::vector<Key> keys) {
   size_t heap[Collection::HEAP_SIZE];
   buffer.seekg(0);
-  offsets.seekg(0);
 
   size_t size = 0;     // current count of elements in heap;
   size_t pending = 0;  // artificial size of heap
   size_t count = 0;    // number of elements in current bucket
   size_t item;         // last item to be put into buffer
-  size_t row = 0;
-  for (; row < this->size(); row += 1) {
+  for (size_t row = 0; row < this->size(); row += 1) {
     if (count == 0) {
       std::cout << "New bucket." << std::endl;
     }
@@ -451,8 +438,9 @@ std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
       }
 
       if (pending == 0) {  // check if new bucket is needed
-        std::cout << "End of bucket. Writing out bucket size to " << count << "." << std::endl;
-        write_raw<short unsigned int>(offsets, count);
+        std::cout << "End of bucket. Writing out bucket size to " << count
+                  << "." << std::endl;
+        offsets.push_back(count);
         count = 0;
         pending = size;
       }
@@ -498,7 +486,7 @@ std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
     {
       if (!pending) {  // reset pending heap size and write out offset
         std::cout << "End of bucket. Writing out bucket size to " << count << "." << std::endl;
-        write_raw<short unsigned int>(offsets, count);
+        offsets.push_back(count);
         count = 0;
         pending = size;
       }
@@ -507,15 +495,13 @@ std::fstream& Collection::replacement_selection_sort(std::fstream& buffer,
   }
 
   buffer.flush();
-  offsets.flush();
   return buffer;
 }
 
 std::fstream& Collection::kway_merge(std::fstream& buffer, std::fstream& output,
-                                     std::fstream& offsets,
-                                     std::vector<Key> keys) {
+                                    std::vector<OffsetSize>& offsets,
+                                    std::vector<Key> keys) {
   buffer.seekg(0);
-  output.seekg(0);
   std::string line;
   while(getline(buffer, line)) {
     output << line;

@@ -235,7 +235,7 @@ public:
    *
    * @return std::vector<std::string> keys
    */
-  std::vector<std::string> keys() const;
+  const std::vector<std::string>& keys() const;
 
   Record get(size_t row);
   Record operator[](size_t row);
@@ -248,8 +248,11 @@ public:
   size_t size() const;
 private:
   friend class Record;
+  typedef short unsigned OffsetSize;
+
   std::ifstream input;
-  std::map<std::string, Key> keys_;
+  std::vector<std::string> keys_;
+  std::map<std::string, Key> key_type_map;
   Index* index;
 
   /**
@@ -264,9 +267,11 @@ private:
    */
   size_t cur_pos();
 
-  std::fstream& replacement_selection_sort(std::fstream& buffer, std::fstream& offsets, std::vector<Key> keys);
+  std::fstream& replacement_selection_sort(std::fstream& buffer,
+                                           std::vector<OffsetSize>& offsets,
+                                           std::vector<Key> keys);
   std::fstream& kway_merge(std::fstream& input, std::fstream& output,
-                           std::fstream& offsets, std::vector<Key> keys);
+                           std::vector<OffsetSize>& offsets, std::vector<Key> keys);
 
   /**
    * Initializes file by opening file-name
