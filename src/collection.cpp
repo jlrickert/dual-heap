@@ -3,19 +3,21 @@
 #include <sstream>
 #include "collection.h"
 
-template<typename Word>
-std::ostream& write_raw(std::ostream& outs, Word value);
+using namespace std;
 
 template<typename Word>
-static std::istream& read_raw(std::istream& ins, Word& value);
+ostream& write_raw(ostream& outs, Word value);
+
+template<typename Word>
+static istream& read_raw(istream& ins, Word& value);
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Collection class implementation section
 ////////////////////////////////////////////////////////////////////////////////
-Key parse_key(std::string raw, int pos);
+Key parse_key(string raw, int pos);
 
-Collection::Collection(const std::string& file_name) : file_name(file_name) {
+Collection::Collection(const string& file_name) : file_name(file_name) {
   this->init_file();
   this->init_keys();
   this->init_index();
@@ -31,14 +33,14 @@ Collection::~Collection() {
 void Collection::init_file() {
   input.open(file_name.c_str());
   if (!input.is_open()) {
-    std::stringstream ss;
+    stringstream ss;
     ss << "File " << file_name.c_str() << " doesn't exist";
-    throw std::runtime_error(ss.str());
+    throw runtime_error(ss.str());
   }
 }
 
 void Collection::init_keys() {
-  std::string line;
+  string line;
   getline(input, line);
 
   int key_count = 0;
@@ -49,7 +51,7 @@ void Collection::init_keys() {
     if (is_delim || is_end) {
       int pos = cp;
       int offset = i - cp + (is_end ? 1 : 0);
-      std::string raw_key = line.substr(pos, offset);
+      string raw_key = line.substr(pos, offset);
       key_count += 1;
       Key key = parse_key(raw_key, key_count);
       this->keys_.push_back(key.name);
@@ -63,15 +65,15 @@ void Collection::init_index() {
   this->index = Index::from_csv(this->file_name);
 }
 
-const std::vector<std::string>& Collection::keys() const {
+const vector<string>& Collection::keys() const {
   return this->keys_;
 }
 
 Collection::Record Collection::operator[](size_t row) {
   if (row >= this->size()) {
-    std::stringstream ss;
+    stringstream ss;
     ss << "Record " << row << " doesn't exist.";
-    throw std::out_of_range(ss.str());
+    throw out_of_range(ss.str());
   }
   size_t rrn = this->index->get(row);
   return Collection::Record(*this, rrn);
@@ -89,14 +91,14 @@ void Collection::seek(size_t pos) {
   this->input.seekg(pos);
 }
 
-Key parse_key(std::string raw, int pos) {
+Key parse_key(string raw, int pos) {
   for (size_t i = 0; i < raw.length() - 1; i += 1) {
     if (raw[i] == ':') {
-      std::string key_name = raw.substr(0, i);
-      std::string type_string = raw.substr(i + 1);
+      string key_name = raw.substr(0, i);
+      string type_string = raw.substr(i + 1);
 
-      // caps don't matter
-      std::transform(type_string.begin(), type_string.end(),
+      // don't care about case
+      transform(type_string.begin(), type_string.end(),
                      type_string.begin(), ::toupper);
 
       Key::Type type = Key::STRING;
@@ -109,9 +111,9 @@ Key parse_key(std::string raw, int pos) {
       return Key(pos, key_name, type);
     }
   }
-  std::stringstream ss;
+  stringstream ss;
   ss << "\"" << raw << "\"" << " is not a valid syntax";
-  throw std::runtime_error(ss.str());
+  throw runtime_error(ss.str());
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +123,7 @@ Collection::Record::Record(Collection& collection, size_t offset)
   : offset(offset),
     collection(collection) {}
 
-Field Collection::Record::get(std::string key_name) {
+Field Collection::Record::get(string key_name) {
   Key key = this->collection.key_type_map.find(key_name)->second;
   return Collection::Record::get(key);
 }
@@ -151,10 +153,10 @@ Field Collection::Record::get(Key key) {
     }
   }
 
-  std::string raw_string;
+  string raw_string;
   {  // read raw value of field
     this->collection.seek(begin);
-    std::ostringstream ss;
+    ostringstream ss;
     char ch;
     while (this->collection.input.get(ch)) {
       if (ch == DELIM || ch == '\n') break;
@@ -167,14 +169,14 @@ Field Collection::Record::get(Key key) {
   { // parse field data
     switch (key.type) {
     case Key::STRING: {
-      std::string* str = new std::string(raw_string.c_str());
+      string* str = new string(raw_string.c_str());
       Field::Data d;
       d.string = str;
       data = d;
       break;
     }
     case Key::INTEGER:
-      std::stringstream ss;
+      stringstream ss;
       ss << raw_string;
       int x = 0;
       ss >> x;
@@ -188,7 +190,7 @@ Field Collection::Record::get(Key key) {
   return field;
 }
 
-Field Collection::Record::operator[](std::string key_name) {
+Field Collection::Record::operator[](string key_name) {
   return this->get(key_name);
 }
 
@@ -196,8 +198,8 @@ Field Collection::Record::operator[](Key key) {
   return this->get(key);
 }
 
-bool Collection::Record::lt(Collection::Record& other, std::vector<Key> keys) {
-  for (std::vector<Key>::iterator it = keys.begin(); it != keys.end(); ++it) {
+bool Collection::Record::lt(Collection::Record& other, vector<Key> keys) {
+  for (vector<Key>::iterator it = keys.begin(); it != keys.end(); ++it) {
     if (this->get(*it) < other.get(*it)) {
       return true;
     } else if (this->get(*it) == other.get(*it)) {
@@ -209,12 +211,12 @@ bool Collection::Record::lt(Collection::Record& other, std::vector<Key> keys) {
   return false;
 }
 
-bool Collection::Record::lte(Collection::Record& other, std::vector<Key> keys) {
+bool Collection::Record::lte(Collection::Record& other, vector<Key> keys) {
   return !this->gt(other, keys);
 }
 
-bool Collection::Record::gt(Collection::Record& other, std::vector<Key> keys) {
-  for (std::vector<Key>::iterator it = keys.begin(); it != keys.end(); ++it) {
+bool Collection::Record::gt(Collection::Record& other, vector<Key> keys) {
+  for (vector<Key>::iterator it = keys.begin(); it != keys.end(); ++it) {
     if (this->get(*it) > other.get(*it)) {
       return true;
     } else if (this->get(*it) == other.get(*it)) {
@@ -226,14 +228,14 @@ bool Collection::Record::gt(Collection::Record& other, std::vector<Key> keys) {
   return false;
 }
 
-bool Collection::Record::gte(Collection::Record& other, std::vector<Key> keys) {
+bool Collection::Record::gte(Collection::Record& other, vector<Key> keys) {
   return !this->lt(other, keys);
 }
 
-std::string Collection::Record::str() {
-  std::ostringstream ss;
+string Collection::Record::str() {
+  ostringstream ss;
   ss << "Record(";
-  for (std::vector<std::string>::const_iterator it = this->collection.keys().begin();
+  for (vector<string>::const_iterator it = this->collection.keys().begin();
        it != this->collection.keys().end(); ++it) {
     Field field = this->get(*it);
     ss << *it << "=" << field.str();
@@ -244,23 +246,23 @@ std::string Collection::Record::str() {
 ////////////////////////////////////////////////////////////////////////////////
 // Field class implementation section
 ////////////////////////////////////////////////////////////////////////////////
-std::string Field::str() const {
+string Field::str() const {
   switch (this->key.type) {
   case Key::INTEGER: {
-    std::ostringstream convert;
+    ostringstream convert;
     convert << this->data.integer;
     return convert.str();
    break;
   }
   case Key::STRING: {
-    return std::string(this->data.string->c_str());
+    return string(this->data.string->c_str());
     break;
   }
   default:
-    return std::string("This is impossible");
+    return string("This is impossible");
     break;
   }
-  return std::string("This is impossible");
+  return string("This is impossible");
 };
 
 Field::~Field() {
@@ -271,10 +273,10 @@ Field::~Field() {
 
 void panic_on_bad_compare(const Field& f1, const Field& f2) {
   if (f1.key.type != f2.key.type) {
-    std::stringstream ss;
+    stringstream ss;
     ss << "Fields " << f1.key.name << " and " << f2.key.name
        << " Cannot be logically compared for order";
-    throw std::logic_error(ss.str());
+    throw logic_error(ss.str());
   }
 }
 
@@ -290,7 +292,7 @@ bool Field::operator<(const Field& other) const {
     break;
   }
   }
-  throw std::logic_error("This should be impossible.");
+  throw logic_error("This should be impossible.");
 }
 
 bool Field::operator>(const Field& other) const {
@@ -306,7 +308,7 @@ bool Field::operator>(const Field& other) const {
     break;
   }
   }
-  throw std::logic_error("This should be impossible.");
+  throw logic_error("This should be impossible.");
 }
 
 bool Field::operator<=(const Field& other) const {
@@ -336,64 +338,86 @@ bool Field::operator==(const Field& other) const {
 }
 
 bool compare(Collection& collection, size_t a, size_t b,
-             std::vector<Key> keys);
+             vector<Key> keys);
 void heapify(Collection& collection, size_t heap[], size_t pending,
-             std::vector<Key> keys);
+             vector<Key> keys);
 
 // TODO: move to a utility file
 template <typename T>
-std::string stringify(T array[], size_t size);
+string stringify(T array[], size_t size);
 template <typename T>
-std::string stringify(T array[], size_t begin, size_t size);
+string stringify(T array[], size_t begin, size_t size);
 
-void Collection::sort(std::string output_file, std::vector<std::string> keys) {
-  std::vector<Key> k;
-  for (std::vector<std::string>::iterator it = keys.begin(); it != keys.end(); it++) {
+void Collection::sort(string output_file, vector<string> keys) {
+  vector<Key> k;
+  for (vector<string>::iterator it = keys.begin(); it != keys.end(); it++) {
     Key key = this->key_type_map.find(*it)->second;
     k.push_back(key);
   }
   return this->sort(output_file, k);
 }
 
-void Collection::sort(std::string output_file, std::vector<Key> keys) {
-  std::fstream buffer;
+void Collection::sort(string output_file, vector<Key> keys) {
+  fstream buffer;
 
-  std::string buffer_file_name = "tmp/buffer";
+  string buffer_file_name = "tmp/buffer";
   buffer.open(buffer_file_name.c_str(),
               buffer.binary | buffer.trunc | buffer.out | buffer.in);
   if (!buffer.good()) {
-    std::ostringstream ss;
+    ostringstream ss;
     ss << "Could not open file " << buffer_file_name;
-    throw std::runtime_error(ss.str());
+    throw runtime_error(ss.str());
   }
 
-  std::vector<OffsetSize> offsets;
+  vector<BucketSize_t> bucket_sizes;
 
-  std::fstream output;
+  fstream output;
   output.open(output_file.c_str(), output.trunc | output.out);
   if (!output.good()) {
-    std::ostringstream ss;
+    ostringstream ss;
     ss << "Could not open file " << output_file;
-    throw std::runtime_error(ss.str());
+    throw runtime_error(ss.str());
   }
 
-  this->replacement_selection_sort(buffer, offsets, keys);
-  this->kway_merge(buffer, output, offsets, keys);
+  this->replacement_selection_sort(buffer, bucket_sizes, keys);
+  { // write header to output
+    vector<string> keys = this->keys();
+    for (size_t i = 0; i < keys.size(); i += 1) {
+      Key key = this->key_type_map.find(keys[i])->second;
+      string type;
+      switch (key.type) {
+      case Key::INTEGER: {
+        type = "integer";
+        break;
+      }
+      case Key::STRING:
+        type = "string";
+        break;
+      }
+      output << keys[i] << ":" << type;
+      if (i == keys.size() - 1) {
+        output << '\n';
+      } else {
+        output << ',';
+      }
+    }
+  }
+  this->kway_merge(buffer, output, bucket_sizes, keys);
 }
 
-std::fstream& Collection::replacement_selection_sort(
-    std::fstream& buffer, std::vector<OffsetSize>& offsets,
-    std::vector<Key> keys) {
+fstream& Collection::replacement_selection_sort(
+    fstream& buffer, vector<BucketSize_t>& bucket_sizes,
+    vector<Key> keys) {
   size_t heap[Collection::HEAP_SIZE];
   buffer.seekg(0);
 
-  size_t size = 0;     // current count of elements in heap;
-  size_t pending = 0;  // artificial size of heap
-  size_t count = 0;    // number of elements in current bucket
-  size_t item;         // last item to be put into buffer
+  size_t size = 0;       // current count of elements in heap;
+  size_t pending = 0;    // artificial size of heap
+  size_t count = 0;      // number of elements in current bucket
+  size_t item;           // last item to be put into buffer
   for (size_t row = 0; row < this->size(); row += 1) {
     if (count == 0) {
-      std::cout << "New bucket." << std::endl;
+      cout << "New bucket." << endl;
     }
 
     { // initially fill the heap
@@ -407,26 +431,26 @@ std::fstream& Collection::replacement_selection_sort(
     }
 
     { // Log current pass
-      std::cout << "Pending=" << pending << ", Bucket count=" << count << ", Next=" << row << std::endl;
-      std::cout << "Initial: " << stringify<size_t>(heap, size) << std::endl;
+      cout << "Pending=" << pending << ", Bucket count=" << count << ", Next=" << row << endl;
+      cout << "Initial: " << stringify<size_t>(heap, size) << endl;
     }
 
     { // heapify
       heapify(*this, heap, pending, keys);
-      std::cout << "Heap: " << stringify<size_t>(heap, pending) << std::endl;
+      cout << "Heap: " << stringify<size_t>(heap, pending) << endl;
     }
 
     { // select value to put in buffer
       item = heap[0];
       count += 1;
-      std::cout << "Select: (" << heap[0] << ") " << stringify<size_t>(heap, 1, size) << std::endl;
+      cout << "Select: (" << heap[0] << ") " << stringify<size_t>(heap, 1, size) << endl;
       write_raw<size_t>(buffer, item);
     }
 
     { // Swap in new incoming value
       heap[0] = heap[pending - 1];  // move last item in heap into
       heap[pending - 1] = row;      // move in new item to the end
-      std::cout << "Swap: " << stringify<size_t>(heap, size) << std::endl;
+      cout << "Swap: " << stringify<size_t>(heap, size) << endl;
     }
 
     { // Mark pending positions if necessary
@@ -438,37 +462,37 @@ std::fstream& Collection::replacement_selection_sort(
       }
 
       if (pending == 0) {  // check if new bucket is needed
-        std::cout << "End of bucket. Writing out bucket size to " << count
-                  << "." << std::endl;
-        offsets.push_back(count);
+        cout << "End of bucket. Writing out bucket size to " << count
+                  << "." << endl;
+        bucket_sizes.push_back(count);
         count = 0;
         pending = size;
       }
     }
-    std::cout << std::endl;
+    cout << endl;
   }
 
   // write out remaining values
   while (size > 0) {
     if (count == 0) {
-      std::cout << "New bucket." << std::endl;
+      cout << "New bucket." << endl;
     }
 
     { // log current pass
-      std::cout << "Pending=" << pending << std::endl;
-      std::cout << "Initial: " << stringify<size_t>(heap, size) << std::endl;
+      cout << "Pending=" << pending << endl;
+      cout << "Initial: " << stringify<size_t>(heap, size) << endl;
     }
 
     { // heapify
       heapify(*this, heap, pending, keys);
-      std::cout << "Heap: " << stringify<size_t>(heap, size) << std::endl;
+      cout << "Heap: " << stringify<size_t>(heap, size) << endl;
     }
 
     size_t item;
     { // select value to put in buffer
       item = heap[0];
       count += 1;
-      std::cout << "Select: (" << heap[0] << ") " << stringify<size_t>(heap, 1, size) << std::endl;
+      cout << "Select: (" << heap[0] << ") " << stringify<size_t>(heap, 1, size) << endl;
       write_raw<size_t>(buffer, item);
     }
 
@@ -480,44 +504,151 @@ std::fstream& Collection::replacement_selection_sort(
       heap[pending - 1] = heap[size - 1]; //
       size -= 1;
       pending -= 1;
-      std::cout << "Swap: " << stringify(heap, size) << std::endl;
+      cout << "Swap: " << stringify(heap, size) << endl;
     }
 
     {
       if (!pending) {  // reset pending heap size and write out offset
-        std::cout << "End of bucket. Writing out bucket size to " << count << "." << std::endl;
-        offsets.push_back(count);
+        cout << "End of bucket. Writing out bucket size to " << count << "." << endl;
+        bucket_sizes.push_back(count);
         count = 0;
         pending = size;
       }
     }
-    std::cout << std::endl;
+    cout << endl;
   }
 
   buffer.flush();
   return buffer;
 }
 
-std::fstream& Collection::kway_merge(std::fstream& buffer, std::fstream& output,
-                                    std::vector<OffsetSize>& offsets,
-                                    std::vector<Key> keys) {
-  buffer.seekg(0);
-  std::string line;
-  while(getline(buffer, line)) {
-    output << line;
-  }
-  output.flush();
+fstream& Collection::kway_merge_pass(fstream& buffer, fstream& output,
+                                    vector<size_t>& bucket_offsets,
+                                    vector<BucketSize_t>& bucket_sizes,
+                                    vector<Key> keys) {
+  size_t count = 0;
   return output;
 }
 
+vector<size_t> Collection::find_offsets(
+    const vector<BucketSize_t>& bucket_sizes) {
+  vector<size_t> bucket_offsets;
+  if (bucket_sizes.size() > 0) bucket_offsets.push_back(0);
+  BucketSize_t count = 0;
+  for (size_t i = 0; i < bucket_sizes.size() - 1; i += 1) {
+    count += bucket_sizes[i];
+    bucket_offsets.push_back(count);
+  }
+  return bucket_offsets;
+}
+
+fstream& Collection::kway_merge(fstream& buffer, fstream& output,
+                                vector<BucketSize_t>& bucket_sizes,
+                                vector<Key> keys) {
+  buffer.seekg(0);
+  size_t active_buckets = 0;
+  int buckets[Collection::HEAP_SIZE]; // holds smallest value of each active
+  vector<size_t> bucket_offsets = find_offsets(bucket_sizes);
+
+  if (bucket_sizes.size() <= Collection::HEAP_SIZE) {
+    // do final merge
+    return kway_merge_pass(buffer, output, bucket_offsets, bucket_sizes, keys);
+  } else { // more passes
+    fstream new_buffer;
+    { // create a new buffer
+      ostringstream ss;
+      ss << "tmp/buffer" << bucket_sizes.size();
+      string buffer_file_name = ss.str();
+      buffer.open(buffer_file_name.c_str(),
+                  buffer.binary | buffer.trunc | buffer.out | buffer.in);
+      if (!new_buffer.good()) {
+        ostringstream ss;
+        ss << "Could not open file " << buffer_file_name;
+        throw runtime_error(ss.str());
+      }
+    }
+    { // do pass and fill new counts
+      size_t passes = bucket_sizes.size() / Collection::HEAP_SIZE;
+      size_t begin = 0;
+      size_t end = Collection::HEAP_SIZE;
+      if ((bucket_sizes.size() % Collection::HEAP_SIZE) != 0) {
+        passes += 1;
+      }
+
+      for (size_t i = 0; i < passes; i += 1) {
+        vector<BucketSize_t> sizes = vector<BucketSize_t>(
+            bucket_sizes.begin() + begin, bucket_sizes.begin() + end);
+        vector<size_t> offsets = vector<size_t>(bucket_sizes.begin() + begin,
+                                                bucket_sizes.begin() + end);
+        kway_merge_pass(buffer, new_buffer, offsets, sizes, keys);
+        begin = end;
+        end += (bucket_sizes.size() % Collection::HEAP_SIZE);
+      }
+    }
+    // vector<size_t> bucket_offsets = find_offsets(bucket_sizes);
+    // return kway_merge(next_buffer, output, bucket_offsets, bucket_sizes, keys)
+  }
+
+  return output;
+
+  // fstream next_buffer;
+  // if (Collection::HEAP_SIZE == bucket_sizes.size()) {
+  //   return this->complete_way_merge(buffer, output, bucket_sizes, keys);
+  // } else {
+  //   ostringstream ss;
+  //   ss << "tmp/buffer" << bucket_sizes.size();
+  //   string buffer_file_name = ss.str();
+  //   buffer.open(buffer_file_name.c_str(),
+  //               buffer.binary | buffer.trunc | buffer.out | buffer.in);
+  //   if (!next_buffer.good()) {
+  //     ostringstream ss;
+  //     ss << "Could not open file " << buffer_file_name;
+  //     throw runtime_error(ss.str());
+  //   }
+  // }
+
+  // size_t rows = 0;                    // count of rows written out
+  // size_t bucket_cur = 0;              // points last active bucket
+  // int buckets[Collection::HEAP_SIZE]; // holds smallest value of each active
+  //                                     // bucket
+  // size_t size = 0;                    // count of elements in buckets
+  // vector<size_t> bucket_offsets;      // location of bucket in file
+
+  // { // fill bucket offsets
+  //   if (bucket_sizes.size() > 0) bucket_offsets.push_back(0);
+  //   BucketSize_t count = 0;
+  //   for (size_t i = 0; i < bucket_sizes.size() - 1; i += 1) {
+  //     count += bucket_sizes[i];
+  //     bucket_offsets.push_back(count);
+  //   }
+  // }
+
+  // while (rows < this->size()) {
+  //   { // activate bucket
+  //     if (size < Collection::HEAP_SIZE && bucket_cur < bucket_sizes.size()) {
+  //       size += 1;
+  //       bucket_cur += 1;
+  //     }
+  //   }
+
+  //   {
+
+  //   }
+
+  //   rows += 1;
+  // }
+
+  // return this->complete_way_merge(next_buffer, output, bucket_sizes, keys);
+}
+
 bool compare(Collection& collection, size_t a, size_t b,
-             std::vector<Key> keys) {
+             vector<Key> keys) {
   Collection::Record rec_a = collection[a];
   Collection::Record rec_b = collection[b];
   return rec_a.lt(rec_b, keys);
 }
 
-void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key> keys) {
+void heapify(Collection& collection, size_t heap[], size_t size, vector<Key> keys) {
   if (size <= 1) {
     return;
   } else if (size <= 2 && compare(collection, heap[1], heap[0], keys)) {
@@ -552,14 +683,14 @@ void heapify(Collection& collection, size_t heap[], size_t size, std::vector<Key
 ////////////////////////////////////////////////////////////////////////////////
 // Index class implementation section
 ////////////////////////////////////////////////////////////////////////////////
-Index* Index::from_csv(std::string file_name) {
-  std::string output_file_name; {
-    std::stringstream ss;
+Index* Index::from_csv(string file_name) {
+  string output_file_name; {
+    stringstream ss;
     ss << "tmp/index";
     output_file_name = ss.str();
   }
 
-  std::fstream input, output;
+  fstream input, output;
   output.open(output_file_name.c_str(),
               output.binary | output.trunc | output.out);
   input.open(file_name.c_str(), input.in);
@@ -607,7 +738,7 @@ Index* Index::from_csv(std::string file_name) {
   return new Index(output_file_name);
 }
 
-Index::Index(std::string file_name) : file_name(file_name) {
+Index::Index(string file_name) : file_name(file_name) {
   stream.open(file_name.c_str(), stream.binary | stream.in);
 
   { // get record count from beginning of file
@@ -639,11 +770,12 @@ size_t Index::operator[](size_t i) {
 size_t Index::size() const {
   return this->size_;
 }
+
 ////////////////////////////////////////////////////////////////////////////////
 // Utility section
 ////////////////////////////////////////////////////////////////////////////////
 template<typename Word>
-std::ostream& write_raw(std::ostream& outs, Word value) {
+ostream& write_raw(ostream& outs, Word value) {
   for (size_t size = sizeof(Word); size; --size, value >>= 8) {
     outs.put((char)(value & 0xFF));
   }
@@ -651,7 +783,7 @@ std::ostream& write_raw(std::ostream& outs, Word value) {
 }
 
 template<typename Word>
-std::istream& read_raw(std::istream& ins, Word& value) {
+istream& read_raw(istream& ins, Word& value) {
   value = 0;
   size_t length = sizeof(Word);
   for (size_t i = 0; i < length; i++) {
@@ -662,13 +794,13 @@ std::istream& read_raw(std::istream& ins, Word& value) {
 }
 
 template <typename T>
-std::string stringify(T array[], size_t size) {
+string stringify(T array[], size_t size) {
   return stringify<T>(array, 0, size);
 }
 
 template <typename T>
-std::string stringify(T array[], size_t begin, size_t size) {
-  std::ostringstream ss;
+string stringify(T array[], size_t begin, size_t size) {
+  ostringstream ss;
   for (size_t i = begin; i < size; i += 1) {
     ss << array[i];
     if (i < size - 1) {

@@ -248,7 +248,6 @@ public:
   size_t size() const;
 private:
   friend class Record;
-  typedef short unsigned OffsetSize;
 
   std::ifstream input;
   std::vector<std::string> keys_;
@@ -267,11 +266,17 @@ private:
    */
   size_t cur_pos();
 
+  typedef short unsigned BucketSize_t;
   std::fstream& replacement_selection_sort(std::fstream& buffer,
-                                           std::vector<OffsetSize>& offsets,
+                                           std::vector<BucketSize_t>& bucket_sizes,
                                            std::vector<Key> keys);
   std::fstream& kway_merge(std::fstream& input, std::fstream& output,
-                           std::vector<OffsetSize>& offsets, std::vector<Key> keys);
+                           std::vector<BucketSize_t>& bucket_sizes,
+                           std::vector<Key> keys);
+  std::fstream& kway_merge_pass(std::fstream& input, std::fstream& output,
+                                std::vector<size_t>& bucket_offsets,
+                                std::vector<BucketSize_t>& bucket_sizes,
+                                std::vector<Key> keys);
 
   /**
    * Initializes file by opening file-name
@@ -287,4 +292,6 @@ private:
    * Generate and index of the csv file
    */
   void init_index();
+
+  std::vector<size_t> find_offsets(const std::vector<BucketSize_t>& bucket_sizes);
 };
