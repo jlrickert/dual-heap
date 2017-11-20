@@ -40,6 +40,12 @@ class Database {
 public:
   class Record {
   public:
+   /**
+   * Database::Record::Record
+   *
+   * @param db Database
+   * @param row Row number
+   */
     Record(const Database& db, int row);
   private:
     std::map<std::string, Field> fields;
@@ -49,8 +55,24 @@ public:
   public:
     Query(const Database& db) : db(db) {};
     // const Query& where();
+    /**
+    * Query::select
+    *
+    * @param key A string
+    */
     const Query& select(std::string key);
+    /**
+    * Query::set_option Field
+    *
+    * @param opt Query option type
+    * @param value Query option data value
+    */
     const Query& set_option(QueryOptionType opt, QueryOptionData value);
+    /**
+    * Query::order_by
+    *
+    * @param key Order by given key
+    */
     const Query& order_by(std::string key);
     Database all();
   private:
@@ -62,10 +84,21 @@ public:
 
   const std::string filename;
   const DBFormat format;
-
+  /**
+   * Database::Database
+   *
+   * @param filename String of the filename
+   * @param fmt Database format
+   */
   Database(std::string filename, DBFormat fmt);
   ~Database();
 
+  /**
+  * Database::get 
+  *
+  * @param n Integer n
+  * @return
+  */
   const Record& get(int n);
   Query query();
 
