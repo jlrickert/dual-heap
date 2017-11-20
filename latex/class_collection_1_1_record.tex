@@ -1,0 +1,87 @@
+\hypertarget{class_collection_1_1_record}{}\section{Collection\+:\+:Record Class Reference}
+\label{class_collection_1_1_record}\index{Collection\+::\+Record@{Collection\+::\+Record}}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{struct_field}{Field} \hyperlink{class_collection_1_1_record_ac045539ed42788b33b56c0c60b4bede4}{get} (std\+::string key\+\_\+name)
+\item 
+\hyperlink{struct_field}{Field} \hyperlink{class_collection_1_1_record_a7e977898edd578a4dd198798e77c96c7}{get} (\hyperlink{struct_key}{Key} key)
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_a74ccccdc99f2a9bd9ee79d7b24b12637}\label{class_collection_1_1_record_a74ccccdc99f2a9bd9ee79d7b24b12637}} 
+\hyperlink{struct_field}{Field} {\bfseries operator\mbox{[}$\,$\mbox{]}} (std\+::string key\+\_\+name)
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_a1d1f629974dd996feddf5ddb9d15c689}\label{class_collection_1_1_record_a1d1f629974dd996feddf5ddb9d15c689}} 
+\hyperlink{struct_field}{Field} {\bfseries operator\mbox{[}$\,$\mbox{]}} (\hyperlink{struct_key}{Key} key)
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_ae5891a93674f570c9b30e2d6eee381a8}\label{class_collection_1_1_record_ae5891a93674f570c9b30e2d6eee381a8}} 
+bool {\bfseries lt} (\hyperlink{class_collection_1_1_record}{Record} \&other, std\+::vector$<$ \hyperlink{struct_key}{Key} $>$ \hyperlink{class_collection_aebff0d78673dac8453ebf51ba32d10eb}{keys})
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_a5f1321a0fd4f5ef2570917d2c3407a90}\label{class_collection_1_1_record_a5f1321a0fd4f5ef2570917d2c3407a90}} 
+bool {\bfseries lte} (\hyperlink{class_collection_1_1_record}{Record} \&other, std\+::vector$<$ \hyperlink{struct_key}{Key} $>$ \hyperlink{class_collection_aebff0d78673dac8453ebf51ba32d10eb}{keys})
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_ad9f0b6f2e1bb15e922d54280eaad85bf}\label{class_collection_1_1_record_ad9f0b6f2e1bb15e922d54280eaad85bf}} 
+bool {\bfseries gt} (\hyperlink{class_collection_1_1_record}{Record} \&other, std\+::vector$<$ \hyperlink{struct_key}{Key} $>$ \hyperlink{class_collection_aebff0d78673dac8453ebf51ba32d10eb}{keys})
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_a27aca1d2127efc59562ffd47e381249e}\label{class_collection_1_1_record_a27aca1d2127efc59562ffd47e381249e}} 
+bool {\bfseries gte} (\hyperlink{class_collection_1_1_record}{Record} \&other, std\+::vector$<$ \hyperlink{struct_key}{Key} $>$ \hyperlink{class_collection_aebff0d78673dac8453ebf51ba32d10eb}{keys})
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_affc0e1f2bc3d8d5e92338f186fc2d1f7}\label{class_collection_1_1_record_affc0e1f2bc3d8d5e92338f186fc2d1f7}} 
+std\+::string {\bfseries str} ()
+\end{DoxyCompactItemize}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+const size\+\_\+t \hyperlink{class_collection_1_1_record_aabb05802a9c94e791df47bd7d8bda096}{offset}
+\end{DoxyCompactItemize}
+\subsection*{Friends}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{class_collection_1_1_record_a6e332922765a19fc2a9593a20f26fc95}\label{class_collection_1_1_record_a6e332922765a19fc2a9593a20f26fc95}} 
+class {\bfseries Collection}
+\end{DoxyCompactItemize}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{class_collection_1_1_record_ac045539ed42788b33b56c0c60b4bede4}\label{class_collection_1_1_record_ac045539ed42788b33b56c0c60b4bede4}} 
+\index{Collection\+::\+Record@{Collection\+::\+Record}!get@{get}}
+\index{get@{get}!Collection\+::\+Record@{Collection\+::\+Record}}
+\subsubsection{\texorpdfstring{get()}{get()}\hspace{0.1cm}{\footnotesize\ttfamily [1/2]}}
+{\footnotesize\ttfamily \hyperlink{struct_field}{Field} Collection\+::\+Record\+::get (\begin{DoxyParamCaption}\item[{std\+::string}]{key\+\_\+name }\end{DoxyParamCaption})}
+
+Finds key name and gets key
+
+
+\begin{DoxyParams}{Parameters}
+{\em key\+\_\+name} & \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+Collection\+::\+Record\+::get(key) 
+\end{DoxyReturn}
+\mbox{\Hypertarget{class_collection_1_1_record_a7e977898edd578a4dd198798e77c96c7}\label{class_collection_1_1_record_a7e977898edd578a4dd198798e77c96c7}} 
+\index{Collection\+::\+Record@{Collection\+::\+Record}!get@{get}}
+\index{get@{get}!Collection\+::\+Record@{Collection\+::\+Record}}
+\subsubsection{\texorpdfstring{get()}{get()}\hspace{0.1cm}{\footnotesize\ttfamily [2/2]}}
+{\footnotesize\ttfamily \hyperlink{struct_field}{Field} Collection\+::\+Record\+::get (\begin{DoxyParamCaption}\item[{\hyperlink{struct_key}{Key}}]{key }\end{DoxyParamCaption})}
+
+Gets key from field in record
+
+
+\begin{DoxyParams}{Parameters}
+{\em key} & \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Data Documentation}
+\mbox{\Hypertarget{class_collection_1_1_record_aabb05802a9c94e791df47bd7d8bda096}\label{class_collection_1_1_record_aabb05802a9c94e791df47bd7d8bda096}} 
+\index{Collection\+::\+Record@{Collection\+::\+Record}!offset@{offset}}
+\index{offset@{offset}!Collection\+::\+Record@{Collection\+::\+Record}}
+\subsubsection{\texorpdfstring{offset}{offset}}
+{\footnotesize\ttfamily const size\+\_\+t Collection\+::\+Record\+::offset}
+
+\hyperlink{class_collection_1_1_record_aabb05802a9c94e791df47bd7d8bda096}{Collection\+::\+Record\+::offset} is the offset of the record. 
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+include/collection.\+h\end{DoxyCompactItemize}
