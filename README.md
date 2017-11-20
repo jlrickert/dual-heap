@@ -27,7 +27,16 @@ make build
 
 # Documentation
 
-TODO
+Use the make file command to build the program.
+
+Doxygen Input location:
+```
+./dual-heap/include
+```
+Doxygen Output location:
+```
+./build
+```
 
 # Contributing
 
