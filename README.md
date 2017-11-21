@@ -2,7 +2,7 @@
 
 Dual Heap project
 
-# Building
+# Building Project
 
 ```
 make build
@@ -16,33 +16,37 @@ make build
 
 # Running the tests
 
-## Dependencies
-
-- pkg-config
-- gtest
+TODO
 
 ```
-./bin/test_dualheap
+make test
 ```
 
 # Documentation
 
-Use the make file command to build the program.
+## Building
 
-Doxygen Input location:
 ```
-./dual-heap/include
+make docs
 ```
-Doxygen Output location:
-```
-./build
-```
+
+## User Manual
+
+See ./doc/User_Manual.docx
+
+## Design Documentation
 
 For the design document look at `doc/Design_Document.docx` This document
 contains what the program does and how it accomplishes it. The document includes
 the various data structures and functions used in the program along with an
 explanation and summary of each one. Refer to this file in case any questions
 arise.
+
+## Developer Documentation
+
+Documentation related to the source code that doxygen generates.
+
+Open `build/html/index.html` in your favorite browser.
 
 # Contributing
 
