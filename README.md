@@ -27,8 +27,22 @@ make build
 
 # Documentation
 
-For the design document look at `doc/Design_Document.docx`
-This document contains what the program does and how it accomplishes it. The document includes the various data structures and functions used in the program along with an explanation and summary of each one. Refer to this file in case any questions arise.
+Use the make file command to build the program.
+
+Doxygen Input location:
+```
+./dual-heap/include
+```
+Doxygen Output location:
+```
+./build
+```
+
+For the design document look at `doc/Design_Document.docx` This document
+contains what the program does and how it accomplishes it. The document includes
+the various data structures and functions used in the program along with an
+explanation and summary of each one. Refer to this file in case any questions
+arise.
 
 # Contributing
 

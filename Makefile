@@ -58,6 +58,7 @@ $(TEST_BUILD)/%.o: $(TEST)/%.cpp
 #### Documentation section
 ########################################
 docs:
+	doxygen
 
 ########################################
 #### Utility section
