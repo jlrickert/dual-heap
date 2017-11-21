@@ -1,4 +1,4 @@
-Full Name,Country,Created At,Id,Email
+Full Name:string,Country:string,Created At:string,Id:Integer,Email:string
 Napoleon Hammes,Saint Barthélemy,Tue Jun 09 2015 04:19:10 GMT-0500 (Central Daylight Time),0,Gilbert@araceli.biz
 Catherine Hagenes,East Germany,Sat Jan 10 1998 14:50:24 GMT-0600 (Central Standard Time),1,Dedric.Ratke@jennings.biz
 Catherine Parker,Israel,Fri Feb 12 1999 16:21:02 GMT-0600 (Central Standard Time),2,Belle@allene.info
