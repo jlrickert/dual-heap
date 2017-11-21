@@ -46,10 +46,16 @@ public:
   bool gt(Record& other, std::vector<std::string> keys);
   bool gte(Record& other, std::vector<std::string> keys);
   std::string str();
+  std::fstream& write(std::fstream& stream);
 private:
   Field get(key_pair_t key);
   Field operator[](key_pair_t key);
   Collection& collection;
+
+  friend std::fstream& operator<<(std::fstream& stream, Record& rec);
 };
+
+std::fstream& operator<<(std::fstream& stream, Record& rec);
+
 
 #endif

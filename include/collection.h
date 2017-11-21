@@ -11,7 +11,6 @@ class Record;
 
 class Collection {
 public:
-  const std::string file_name;
   /**
    * Constructs Collection::Collection, initializes file, keys, and index
    *
@@ -47,10 +46,13 @@ public:
    * @return count of records
    */
   size_t size() const;
+
+  std::string file_name() const;
 private:
   friend class Record;
+  std::string file_name_;
   Index* index;
-  std::ifstream input;
+  std::ifstream* input;
   std::vector<key_pair_t> keys_;  // this preserves order of keys
 
   // these do not preserve order
@@ -64,17 +66,14 @@ private:
    */
   void seek(size_t pos);
 
-  /**
-   * @return this->input.tellg()
-   */
-  size_t cur_pos();
+  std::fstream& replacement_selection_sort(
+      std::fstream& buffer, std::vector<unsigned int>& bucket_sizes,
+      std::vector<std::string> keys);
 
-  std::fstream& replacement_selection_sort(std::fstream& buffer,
-                                           std::fstream& offsets,
-                                           std::vector<std::string> keys);
-  std::fstream& kway_merge(std::fstream& input,
-                           std::fstream& output,
-                           std::fstream& offsets,
+  std::fstream& output_keys(std::fstream& output);
+
+  std::fstream& kway_merge(std::fstream& buffer, std::fstream& output,
+                           std::vector<unsigned int>& bucket_sizes,
                            std::vector<std::string> keys);
 
   /**

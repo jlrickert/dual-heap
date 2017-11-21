@@ -60,4 +60,11 @@ std::string stringify(const T array[], size_t size) {
   return stringify<T>(array, 0, size);
 }
 
+template <typename T>
+void initialize(T array[], size_t size, T initial = 0) {
+  for (size_t i = 0; i < size; i += 1) {
+    array[i] = initial;
+  }
+}
+
 #endif

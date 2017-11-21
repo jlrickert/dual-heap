@@ -22,7 +22,7 @@ Field Record::get(key_pair_t key) {
   size_t pos = this->collection.key_pos_index.find(key.first)->second;
 
   // Seek record
-  this->collection.input.seekg(this->offset);
+  this->collection.input->seekg(this->offset);
 
   size_t begin = this->offset;
   size_t end = this->offset;
@@ -30,10 +30,10 @@ Field Record::get(key_pair_t key) {
     char ch;
     size_t count = 0; // current field position
 
-    while (this->collection.input.get(ch)) {
+    while (this->collection.input->get(ch)) {
       if (ch == CSV_DELIM || ch == '\n') {
         count += 1;
-        int cur = this->collection.input.tellg();
+        int cur = this->collection.input->tellg();
         begin = end;
         end = cur;
         if (count == (pos + 1)) {
@@ -46,10 +46,10 @@ Field Record::get(key_pair_t key) {
 
   string raw_string;
   {  // read raw value of field
-    this->collection.seek(begin);
+    this->collection.input->seekg(begin);
     ostringstream ss;
     char ch;
-    while (this->collection.input.get(ch)) {
+    while (this->collection.input->get(ch)) {
       if (ch == CSV_DELIM || ch == '\n') break;
       else ss << ch;
     }
@@ -79,6 +79,18 @@ Field Record::operator[](string key_name) {
 
 Field Record::operator[](key_pair_t key) {
   return this->get(key);
+}
+
+string Record::str() {
+  ostringstream ss;
+  ss << "Record(";
+  vector<string> keys = this->collection.keys();
+  for (vector<string>::const_iterator it = keys.begin();
+       it != keys.end(); ++it) {
+    Field field = this->get(*it);
+    ss << *it << "=" << field.str();
+  }
+  return ss.str();
 }
 
 bool Record::lt(Record& other, vector<string> keys) {
@@ -115,13 +127,29 @@ bool Record::gte(Record& other, vector<string> keys) {
   return !this->lt(other, keys);
 }
 
-string Record::str() {
-  ostringstream ss;
-  ss << "Record(";
-  for (vector<string>::const_iterator it = this->collection.keys().begin();
-       it != this->collection.keys().end(); ++it) {
-    Field field = this->get(*it);
-    ss << *it << "=" << field.str();
+fstream& Record::write(fstream& stream) {
+  vector<string> keys = this->collection.keys();
+  for (size_t i = 0; i < keys.size(); i += 1) {
+    Field field = this->get(keys[i]);
+    stream << field.str();
+    if (i < keys.size() - 1) {
+      stream << ',';
+    } else {
+      stream << '\n';
+    }
   }
-  return ss.str();
+  return stream;
+}
+
+fstream& operator<<(fstream& stream, Record& rec) {
+  vector<string> keys = rec.collection.keys();
+  for (size_t i = 0; i < keys.size(); i += 1) {
+    stream << rec[keys[i]].str();
+    if (i < keys.size() - 1) {
+      stream << ',';
+    } else {
+      stream << '\n';
+    }
+  }
+  return stream;
 }
