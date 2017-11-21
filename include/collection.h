@@ -11,7 +11,6 @@ class Record;
 
 class Collection {
 public:
-  const static size_t HEAP_SIZE = 3;
   const std::string file_name;
   /**
    * Constructs Collection::Collection, initializes file, keys, and index

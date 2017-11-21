@@ -3,6 +3,7 @@ PROGRAM = dualheap
 CXX = g++
 CXXFLAGS = -g -Wall
 
+TMP = tmp
 BIN = bin
 TEST = test
 SRC = src
@@ -19,40 +20,18 @@ INCLUDES := -Iinclude
 
 # build program and test program
 build: bin/$(PROGRAM)
-
-# compile program if out of date and run executable with arguments
-# example: `make exe arg1 arg2 arg3`
-exe: build
-	@bin/$(PROGRAM) $(filter-out $@, $(MAKECMDGOALS))
+	mkdir -p $(TMP)
 
 # links all objects and compiles to program
 bin/$(PROGRAM): $(OBJECTS) $(PROGRAM).cpp
-	@mkdir -p $(BIN)
+	mkdir -p $(BIN)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@
 
 # compiles all c++ files to an object file
 $(BUILD)/%.o: $(SRC)/%.cpp
-	@mkdir -p $(BUILD)
+	mkdir -p $(BUILD)
 	@echo "Compiling $<..."
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
-
-########################################
-#### Test section
-########################################
-TEST_BUILD = $(BUILD)/test
-TEST_SOURCES = $(shell find $(TEST) -name "*.cpp")
-TEST_OBJECTS := $(patsubst $(TEST)/%,$(TEST_BUILD)/%,$(TEST_SOURCES:.cpp=.o))
-GTEST_CFLAGS = $(shell pkg-config --cflags gtest)
-GTEST_LIBS = $(shell pkg-config --libs gtest)
-
-bin/test_$(PROGRAM): $(TEST_OBJECTS) $(OBJECTS)
-	@mkdir -p $(BIN)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $^ -o $@ $(GTEST_LIBS)
-
-$(TEST_BUILD)/%.o: $(TEST)/%.cpp
-	@mkdir -p $(TEST_BUILD)
-	@echo "Compiling $<..."
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $< $(GTEST_CFLAGS)
 
 ########################################
 #### Documentation section
@@ -66,8 +45,6 @@ docs:
 clean:
 	rm -r $(BUILD)
 	rm -r $(BIN)
+	rm -r $(TMP)
 
 .PHONY: clean
-
-%:
-	@true

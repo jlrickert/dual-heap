@@ -19,6 +19,6 @@ enum Tkey {
 typedef std::pair<std::string, Tkey> key_pair_t;
 
 
-const size_t HEAP_SIZE = 3;
+const size_t HEAP_SIZE = 8;
 
 #endif

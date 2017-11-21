@@ -26,8 +26,8 @@ Collection::~Collection() {
 }
 
 void Collection::init_file() {
-  input.open(file_name.c_str());
-  if (!input.is_open()) {
+  this->input.open(file_name.c_str());
+  if (!this->input.is_open()) {
     stringstream ss;
     ss << "File " << file_name.c_str() << " doesn't exist";
     throw runtime_error(ss.str());
@@ -132,12 +132,6 @@ bool compare(Collection& collection, size_t a, size_t b,
 void heapify(Collection& collection, size_t heap[], size_t pending,
              vector<string> keys);
 
-// TODO: move to a utility file
-template <typename T>
-string stringify(T array[], size_t size);
-template <typename T>
-string stringify(T array[], size_t begin, size_t size);
-
 void Collection::sort(string output_file, vector<string> keys) {
   fstream buffer, offsets;
 
@@ -174,7 +168,7 @@ void Collection::sort(string output_file, vector<string> keys) {
 fstream& Collection::replacement_selection_sort(fstream& buffer,
                                                 fstream& offsets,
                                                 vector<string> keys) {
-  size_t heap[Collection::HEAP_SIZE];
+  size_t heap[HEAP_SIZE];
   buffer.seekg(0);
   offsets.seekg(0);
 
@@ -182,14 +176,13 @@ fstream& Collection::replacement_selection_sort(fstream& buffer,
   size_t pending = 0;  // artificial size of heap
   size_t count = 0;    // number of elements in current bucket
   size_t item;         // last item to be put into buffer
-  size_t row = 0;
-  for (; row < this->size(); row += 1) {
-    if (count == 0) {
+  for (size_t row = 0; row < this->size(); row += 1) {
+    if ((count == 0 && size >= HEAP_SIZE)) {
       cout << "New bucket." << endl;
     }
 
     { // initially fill the heap
-      if (size < Collection::HEAP_SIZE) {
+      if (size < HEAP_SIZE) {
         heap[size] = row;
         size += 1;
         pending += 1;

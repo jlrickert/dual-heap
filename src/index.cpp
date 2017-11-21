@@ -6,7 +6,8 @@
 
 
 Index* Index::from_csv(std::string file_name) {
-  std::string output_file_name; {
+  std::string output_file_name;
+  { // create temporary file name
     std::stringstream ss;
     ss << "tmp/index";
     output_file_name = ss.str();

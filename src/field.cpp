@@ -4,6 +4,8 @@
 #include "field.h"
 #include "types.h"
 
+#include <iostream>
+
 using namespace std;
 
 Field::Field(std::string str, key_pair_t key_pair) {
@@ -43,7 +45,7 @@ string Field::str() const {
     break;
   }
   }
-  return string("This is impossible");
+  return std::string("This is impossible");
 };
 
 void Field::panic_on_bad_compare(const Field& other) const {

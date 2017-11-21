@@ -1,6 +1,8 @@
 #include "record.h"
 #include "collection.h"
 
+#include <iostream>
+
 using namespace std;
 
 Record::Record(Collection& collection, size_t offset)
@@ -18,8 +20,9 @@ Field Record::get(string key_name) {
 
 Field Record::get(key_pair_t key) {
   size_t pos = this->collection.key_pos_index.find(key.first)->second;
+
   // Seek record
-  this->collection.seek(this->offset);
+  this->collection.input.seekg(this->offset);
 
   size_t begin = this->offset;
   size_t end = this->offset;
@@ -31,10 +34,9 @@ Field Record::get(key_pair_t key) {
       if (ch == CSV_DELIM || ch == '\n') {
         count += 1;
         int cur = this->collection.input.tellg();
-
         begin = end;
         end = cur;
-        if (count == pos) {
+        if (count == (pos + 1)) {
           end -= 1;
           break;
         }
