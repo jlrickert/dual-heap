@@ -1,4 +1,6 @@
 #include <sstream>
+#include <string>
+#include <stdexcept>
 #include "field.h"
 #include "types.h"
 
@@ -31,7 +33,7 @@ Field::Field(const Field& other) {
 string Field::str() const {
   switch (this->key_pair.second) {
   case INTEGER: {
-    std::ostringstream convert;
+    ostringstream convert;
     convert << this->integer;
     return convert.str();
    break;
@@ -41,15 +43,15 @@ string Field::str() const {
     break;
   }
   }
-  return std::string("This is impossible");
+  return string("This is impossible");
 };
 
 void Field::panic_on_bad_compare(const Field& other) const {
   if (this->key_pair.second != other.key_pair.second) {
-    std::stringstream ss;
+    stringstream ss;
     ss << "Fields " << this->key_pair.first << " and " << other.key_pair.first
       << " Cannot be logically compared for order";
-    throw std::logic_error(ss.str());
+    throw logic_error(ss.str());
   }
 }
 
@@ -65,7 +67,7 @@ bool Field::operator<(const Field& other) const {
     break;
   }
   }
-  throw std::logic_error("This should be impossible.");
+  throw logic_error("This should be impossible.");
 }
 
 bool Field::operator>(const Field& other) const {
@@ -81,7 +83,7 @@ bool Field::operator>(const Field& other) const {
     break;
   }
   }
-  throw std::logic_error("This should be impossible.");
+  throw logic_error("This should be impossible.");
 }
 
 bool Field::operator<=(const Field& other) const {

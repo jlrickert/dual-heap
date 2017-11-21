@@ -1,6 +1,7 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
+#include <stdexcept>
 
 #include "collection.h"
 #include "record.h"
