@@ -113,3 +113,7 @@ bool Field::operator==(const Field& other) const {
   }
   return false;
 }
+
+bool Field::operator!=(const Field& other) const {
+  return !(*this == other);
+}

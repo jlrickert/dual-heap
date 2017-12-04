@@ -15,10 +15,11 @@ enum Tkey {
   STRING,
 };
 
-
 typedef std::pair<std::string, Tkey> key_pair_t;
 
-
+/**
+ * Max heap size for replacement selection sort.
+ */
 const size_t HEAP_SIZE = 8;
 
 #endif

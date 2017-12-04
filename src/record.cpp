@@ -62,13 +62,17 @@ Field Record::get(key_pair_t key) {
       return Field(raw_string, key);
       break;
     }
-    case INTEGER:
+    case INTEGER: {
       stringstream ss;
       ss << raw_string;
       int x = 0;
       ss >> x;
       return Field(x, key);
       break;
+    }
+    default: {
+      break;
+    }
     }
   }
 }
@@ -125,6 +129,19 @@ bool Record::gt(Record& other, vector<string> keys) {
 
 bool Record::gte(Record& other, vector<string> keys) {
   return !this->lt(other, keys);
+}
+
+bool Record::eq(Record& other, std::vector<std::string> keys) {
+  for (vector<string>::iterator it = keys.begin(); it != keys.end(); ++it) {
+    if (!(this->get(*it) == other.get(*it))) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool Record::neq(Record& other, std::vector<std::string> keys) {
+  return !(this->eq(other, keys));
 }
 
 fstream& Record::write(fstream& stream) {

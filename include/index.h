@@ -38,11 +38,6 @@ public:
   size_t size() const;
 private:
   /**
-   * Word size of entry in the index.
-   */
-  typedef size_t Word;
-
-  /**
    * Get record count from beginning of file
    *
    * @param file_name

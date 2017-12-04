@@ -6,11 +6,13 @@
 #include "record.h"
 #include "types.h"
 #include "index.h"
+#include "bucket.h"
 
 class Record;
 
 class Collection {
 public:
+
   /**
    * Constructs Collection::Collection, initializes file, keys, and index
    *
@@ -41,6 +43,13 @@ public:
   Record operator[](size_t row);
 
   /**
+   * Returns true if row a is less than b based on the keys
+   *
+   * @ return a <= b
+   */
+  int compare(size_t a, size_t b, std::vector<std::string> keys);
+
+  /**
    * Return the number of records in a collection
    *
    * @return count of records
@@ -50,6 +59,8 @@ public:
   std::string file_name() const;
 private:
   friend class Record;
+  friend class BucketManager;
+
   std::string file_name_;
   Index* index;
   std::ifstream* input;
@@ -66,14 +77,14 @@ private:
    */
   void seek(size_t pos);
 
-  std::fstream& replacement_selection_sort(
-      std::fstream& buffer, std::vector<unsigned int>& bucket_sizes,
-      std::vector<std::string> keys);
+  std::fstream& replacement_selection_sort(std::fstream& buffer,
+                                           std::vector<int>& bucket_sizes,
+                                           std::vector<std::string> keys);
 
   std::fstream& output_keys(std::fstream& output);
 
   std::fstream& kway_merge(std::fstream& buffer, std::fstream& output,
-                           std::vector<unsigned int>& bucket_sizes,
+                           std::vector<int> bucket_sizes,
                            std::vector<std::string> keys);
 
   /**
@@ -86,10 +97,49 @@ private:
    */
   void init_keys();
 
+  key_pair_t parse_key(std::string raw);
+
   /**
    * Generate and index of the csv file
    */
   void init_index();
+
+  // bool compare(Bucket* a, Bucket* b, std::vector<std::string> keys);
+  // std::string stringify(Bucket* buckets[], size_t size);
+
+  template <typename T>
+  void heapify(T heap[], size_t size, std::vector<std::string> keys) {
+    if (size <= 1) {
+      return;
+    } else if (size <= 2 && this->compare(heap[1], heap[0], keys) < 0) {
+      T temp = heap[0];
+      heap[0] = heap[1];
+      heap[1] = temp;
+      return;
+    }
+    for (size_t i = size / 2; i >= 1; i -= 1) {
+      T parent = heap[i - 1];
+      T left = heap[i * 2 - 1];
+
+      if (i * 2 >= size) {
+        if (this->compare(left, parent, keys) < 0) {
+          heap[i - 1] = left;
+          heap[i * 2 - 1] = parent;
+        }
+      } else {
+        T right = heap[i * 2];
+        if (this->compare(left, right, keys) &&
+            this->compare(left, parent, keys) < 0) {
+          heap[i - 1] = left;
+          heap[i * 2 - 1] = parent;
+        } else if (this->compare(right, left, keys) < 0 &&
+                   this->compare(right, parent, keys) < 0) {
+          heap[i - 1] = right;
+          heap[i * 2] = parent;
+        }
+      }
+    }
+  }
 };
 
 #endif

@@ -10,6 +10,7 @@
 
 class Collection;
 
+
 class Record {
 public:
   /**
@@ -45,6 +46,8 @@ public:
   bool lte(Record& other, std::vector<std::string> keys);
   bool gt(Record& other, std::vector<std::string> keys);
   bool gte(Record& other, std::vector<std::string> keys);
+  bool eq(Record& other, std::vector<std::string> keys);
+  bool neq(Record& other, std::vector<std::string> keys);
   std::string str();
   std::fstream& write(std::fstream& stream);
 private:

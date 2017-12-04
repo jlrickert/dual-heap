@@ -4,6 +4,7 @@
 #include <string>
 #include "types.h"
 
+
 class Field {
 public:
   const std::string key;
@@ -71,6 +72,7 @@ public:
    * @return this->data.integer == other.data.integer, or *(this->data.string) == *(other.data.string)
    */
   bool operator==(const Field& other) const;
+  bool operator!=(const Field& other) const;
 private:
   key_pair_t key_pair;
 

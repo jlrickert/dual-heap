@@ -4,18 +4,20 @@
 #include <sstream>
 #include <vector>
 
-template<typename Word>
-std::ostream& write_raw(std::ostream& outs, Word value) {
-  for (size_t size = sizeof(Word); size; --size, value >>= 8) {
+namespace Util {
+
+template<typename WordSize>
+std::ostream& write_raw(std::ostream& outs, WordSize value) {
+  for (size_t size = sizeof(WordSize); size; --size, value >>= 8) {
     outs.put((char)(value & 0xFF));
   }
   return outs;
 }
 
-template<typename Word>
-std::istream& read_raw(std::istream& ins, Word& value) {
+template<typename WordSize>
+std::istream& read_raw(std::istream& ins, WordSize& value) {
   value = 0;
-  size_t length = sizeof(Word);
+  size_t length = sizeof(WordSize);
   for (size_t i = 0; i < length; i++) {
     int byte = ins.get() << (8 * i);
     value |= byte;
@@ -65,6 +67,7 @@ void initialize(T array[], size_t size, T initial = 0) {
   for (size_t i = 0; i < size; i += 1) {
     array[i] = initial;
   }
+}
 }
 
 #endif

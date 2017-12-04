@@ -3,6 +3,7 @@
 #include "types.h"
 #include "index.h"
 #include "utilities.h"
+#include "types.h"
 
 
 Index* Index::from_csv(std::string file_name) {
@@ -31,7 +32,7 @@ Index* Index::from_csv(std::string file_name) {
   }
 
   // save a spot for size;
-  output.seekp(sizeof(Word));
+  output.seekp(sizeof(size_t));
 
   size_t size = 0;  // keep track of count of records
   { // fill output with offsets
@@ -45,7 +46,7 @@ Index* Index::from_csv(std::string file_name) {
       }
       if (ch == '\n' && count >= key_count - 1) {
         size += 1;
-        write_raw<Word>(output, cur);
+        Util::write_raw<size_t>(output, cur);
         cur = input.tellg();
         count = 0;
       }
@@ -54,7 +55,7 @@ Index* Index::from_csv(std::string file_name) {
 
   { // write number of records at first byte
     output.seekp(0);
-    write_raw<Word>(output, size);
+    Util::write_raw<size_t>(output, size);
   }
 
   output.sync();
@@ -67,7 +68,7 @@ Index::Index(std::string file_name) : file_name(file_name) {
   { // get record count from beginning of file
     size_t size = 0;
     this->stream.seekg(0);
-    read_raw<Word>(this->stream, size);
+    Util::read_raw<size_t>(this->stream, size);
     this->size_ = size;
   }
 };
@@ -79,10 +80,10 @@ Index::~Index() {
 }
 
 size_t Index::get(size_t i) {
-  int count_offset = sizeof(Word);
-  this->stream.seekg(i * sizeof(Word) + count_offset);
-  Word offset;
-  read_raw<Word>(this->stream, offset);
+  int count_offset = sizeof(size_t);
+  this->stream.seekg(i * sizeof(size_t) + count_offset);
+  size_t offset;
+  Util::read_raw<size_t>(this->stream, offset);
   return offset;
 }
 
