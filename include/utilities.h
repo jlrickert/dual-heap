@@ -5,7 +5,6 @@
 #include <vector>
 
 namespace Util {
-
 template<typename WordSize>
 std::ostream& write_raw(std::ostream& outs, WordSize value) {
   for (size_t size = sizeof(WordSize); size; --size, value >>= 8) {
@@ -63,11 +62,27 @@ std::string stringify(const T array[], size_t size) {
 }
 
 template <typename T>
+std::string stringifyVector(std::vector<T>& vec) {
+  if (vec.size() == 0) {
+    return "[]";
+  }
+
+  std::ostringstream ss;
+  ss << "[";
+  for (size_t i = 0; i < (vec.size() - 1); i += 1) {
+    ss << vec[i] << ", ";
+  }
+  ss << vec[vec.size() - 1];
+  ss << "]";
+  return ss.str();
+}
+
+template <typename T>
 void initialize(T array[], size_t size, T initial = 0) {
   for (size_t i = 0; i < size; i += 1) {
     array[i] = initial;
   }
 }
-}
+} // end namespace Util
 
 #endif

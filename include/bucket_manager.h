@@ -10,8 +10,8 @@ public:
   BucketManager(Collection& collection, std::fstream& buffer,
                 std::vector<int> buckets_sizes);
   void init();
-  Record& pop();
-  void heapify();
+  Record pop();
+  void heapify(std::vector<std::string> keys);
   bool finished();
 private:
   Collection& collection;

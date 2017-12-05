@@ -4,10 +4,12 @@
 #include <algorithm>
 #include <stdexcept>
 
+#include "bucket.h"
+#include "bucket_manager.h"
 #include "collection.h"
 #include "record.h"
-#include "utilities.h"
 #include "types.h"
+#include "utilities.h"
 
 
 using namespace std;
@@ -110,13 +112,12 @@ Record Collection::get(size_t row) {
     throw out_of_range(ss.str());
   }
   size_t rrn = this->index->get(row);
-  return Record(*this, rrn);
+  return Record(*this, row, rrn);
 }
 
 Record Collection::operator[](size_t row) {
   return this->get(row);
 }
-
 
 size_t Collection::size() const {
   return this->index->size();
@@ -192,6 +193,39 @@ void Collection::sort(string output_file, vector<string> keys) {
   this->kway_merge(buffer, output, bucket_sizes, keys);
 }
 
+void Collection::heapify(size_t heap[], size_t size, vector<string> keys) {
+  if (size <= 1) {
+    return;
+  } else if (size <= 2 && this->compare(heap[1], heap[0], keys) < 0) {
+    size_t temp = heap[0];
+    heap[0] = heap[1];
+    heap[1] = temp;
+    return;
+  }
+  for (size_t i = size / 2; i >= 1; i -= 1) {
+    size_t parent = heap[i - 1];
+    size_t left = heap[i * 2 - 1];
+
+    if (i * 2 >= size) {
+      if (this->compare(left, parent, keys) < 0) {
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
+      }
+    } else {
+      size_t right = heap[i * 2];
+      if (this->compare(left, right, keys) &&
+          this->compare(left, parent, keys) < 0) {
+        heap[i - 1] = left;
+        heap[i * 2 - 1] = parent;
+      } else if (this->compare(right, left, keys) < 0 &&
+                 this->compare(right, parent, keys) < 0) {
+        heap[i - 1] = right;
+        heap[i * 2] = parent;
+      }
+    }
+  }
+}
+
 std::fstream& Collection::replacement_selection_sort(
     fstream& buffer, vector<int>& bucket_sizes,
     vector<std::string> keys) {
@@ -212,7 +246,7 @@ std::fstream& Collection::replacement_selection_sort(
         heap[size] = row;
         size += 1;
         pending += 1;
-        this->heapify<size_t>(heap, pending, keys);
+        this->heapify(heap, pending, keys);
         continue;
       }
     }
@@ -223,7 +257,7 @@ std::fstream& Collection::replacement_selection_sort(
     }
 
     { // heapify
-      this->heapify<size_t>(heap, pending, keys);
+      this->heapify(heap, pending, keys);
       cout << "Heap: " << Util::stringify<size_t>(heap, pending) << endl;
     }
 
@@ -270,7 +304,7 @@ std::fstream& Collection::replacement_selection_sort(
     }
 
     { // heapify
-      this->heapify<size_t>(heap, pending, keys);
+      this->heapify(heap, pending, keys);
       cout << "Heap: " << Util::stringify<size_t>(heap, size) << endl;
     }
 
@@ -311,9 +345,19 @@ std::fstream& Collection::replacement_selection_sort(
 fstream& Collection::kway_merge(fstream& buffer, fstream& output,
                                 vector<int> bucket_sizes, vector<string> keys) {
   cout << "Starting Kway merge" << endl;
+  cout << "Current Bucket sizes: " << Util::stringifyVector<int>(bucket_sizes) << endl;
   buffer.seekg(0);
 
-  // BucketManager manager(*this, buffer, bucket_sizes);
+  BucketManager manager(*this, buffer, bucket_sizes);
+  manager.init();
+  // while (!manager.finished()) {
+    manager.heapify(keys);
+    Record record = manager.pop();
+    output << record << endl;
+    // record.write(output);
+    output.flush();
+    cout << "Writing " << record.str() << endl;
+  // }
   // manager.init();
 
   // const size_t bucket_count = bucket_sizes.size();
@@ -363,6 +407,7 @@ fstream& Collection::kway_merge(fstream& buffer, fstream& output,
 
   // output.flush();
   // return output;
+  return output;
 }
 
 // bool Collection::compare(Bucket* a, Bucket* b, vector<string> keys) {

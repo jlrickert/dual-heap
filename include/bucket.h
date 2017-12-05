@@ -1,23 +1,25 @@
 #ifndef BUCKET_H
 #define BUCKET_H
 
-#include "bucket.h"
-#include "collection.h"
 #include "record.h"
-
-class Record;
+#include "bucket.h"
 
 class Bucket {
 public:
-  Bucket(Record& record, size_t bucket_number);
+  Bucket(Record record, size_t bucket_number);
   Bucket(const Bucket& other);
   Bucket& operator=(const Bucket& other);
-  Record& record();
+  Record record();
   size_t bucket_number() const;
+  std::string str();
 private:
-  Record& rec;
+  Record rec;
   size_t row_;
   size_t bucket_number_;
+
+  friend std::ostream& operator<<(std::ostream& stream, Bucket& rec);
 };
+
+std::ostream& operator<<(std::ostream& stream, Bucket& rec);
 
 #endif

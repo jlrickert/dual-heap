@@ -1,4 +1,9 @@
+#include "sstream"
+#include "bucket.h"
 #include "bucket_manager.h"
+
+#include "utilities.h"
+#include "iostream"
 
 using namespace std;
 
@@ -16,7 +21,31 @@ void BucketManager::init() {
     size_t row;
     this->sorted_buffer.seekg(this->bucket_offsets_[i] * sizeof(size_t));
     Util::read_raw<size_t>(this->sorted_buffer, row);
+    Record rec(this->collection.get(row));
+    Bucket bucket(rec, i);
+    this->buckets_.push_back(bucket);
+    cout << this->buckets_[i] << endl;
+    this->cursors.push_back(this->bucket_offsets_[i]);
   }
+  cerr << "DEBUG: initial bucket offsets " << Util::stringifyVector(this->bucket_offsets_) << endl;
+  cerr << "DEBUG: initial bucket positions " << Util::stringifyVector(this->cursors) << endl;
+  cerr << "DEBUG: initial buckets " << Util::stringifyVector(this->buckets_) << endl;
+}
+
+bool BucketManager::finished() {
+  return this->buckets_.size() == 0;
+}
+
+Record BucketManager::pop() {
+  Bucket bucket(this->buckets_[0]);
+  // Record rec(this->buckets_[0].record());
+  this->buckets_[0] = this->buckets_[this->buckets_.size() - 1];
+
+  this->buckets_[this->buckets_.size() - 1];
+  return bucket.record();
+}
+
+void BucketManager::heapify(vector<string> keys) {
 }
 
 vector<size_t> BucketManager::find_offsets(const vector<int>& bucket_sizes) {

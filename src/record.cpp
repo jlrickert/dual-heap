@@ -5,13 +5,23 @@
 
 using namespace std;
 
-Record::Record(Collection& collection, size_t offset)
-  : offset(offset),
+Record::Record(Collection& collection, size_t row, size_t offset)
+  : row_(row),
+    offset_(offset),
     collection(collection) {}
 
 Record::Record(const Record& other)
-  : offset(other.offset),
+  : row_(other.row()),
+    offset_(other.offset_),
     collection(other.collection) {}
+
+size_t Record::row() const {
+  return this->row_;
+}
+
+size_t Record::offset() const {
+  return this->offset_;
+}
 
 Field Record::get(string key_name) {
   key_pair_t key = this->collection.key_index.find(key_name)->second;
@@ -22,10 +32,10 @@ Field Record::get(key_pair_t key) {
   size_t pos = this->collection.key_pos_index.find(key.first)->second;
 
   // Seek record
-  this->collection.input->seekg(this->offset);
+  this->collection.input->seekg(this->offset());
 
-  size_t begin = this->offset;
-  size_t end = this->offset;
+  size_t begin = this->offset();
+  size_t end = this->offset();
   { // seek position of field within record
     char ch;
     size_t count = 0; // current field position
@@ -87,13 +97,20 @@ Field Record::operator[](key_pair_t key) {
 
 string Record::str() {
   ostringstream ss;
-  ss << "Record(";
   vector<string> keys = this->collection.keys();
-  for (vector<string>::const_iterator it = keys.begin();
-       it != keys.end(); ++it) {
-    Field field = this->get(*it);
-    ss << *it << "=" << field.str();
+
+  if (keys.size() == 0) {
+    return "Record()";
   }
+
+  ss << "Record(";
+  for (size_t i = 0; i < keys.size(); i += 1) {
+    ss << keys[i] << "=" << this->get(keys[i]).str();
+    if (i < keys.size() - 1) {
+      ss << ", ";
+    }
+  }
+  ss << ")";
   return ss.str();
 }
 
@@ -144,7 +161,7 @@ bool Record::neq(Record& other, std::vector<std::string> keys) {
   return !(this->eq(other, keys));
 }
 
-fstream& Record::write(fstream& stream) {
+ostream& Record::write(ostream& stream) {
   vector<string> keys = this->collection.keys();
   for (size_t i = 0; i < keys.size(); i += 1) {
     Field field = this->get(keys[i]);
@@ -158,15 +175,6 @@ fstream& Record::write(fstream& stream) {
   return stream;
 }
 
-fstream& operator<<(fstream& stream, Record& rec) {
-  vector<string> keys = rec.collection.keys();
-  for (size_t i = 0; i < keys.size(); i += 1) {
-    stream << rec[keys[i]].str();
-    if (i < keys.size() - 1) {
-      stream << ',';
-    } else {
-      stream << '\n';
-    }
-  }
-  return stream;
+ostream& operator<<(ostream& stream, Record& rec) {
+  return rec.write(stream);
 }

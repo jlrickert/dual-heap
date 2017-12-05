@@ -10,7 +10,6 @@
 
 class Collection;
 
-
 class Record {
 public:
   /**
@@ -19,13 +18,22 @@ public:
    * @param collection
    * @param offset
    */
-  Record(Collection& collection, size_t offset);
+  Record(Collection& collection, size_t row, size_t offset);
   Record(const Record& other);
 
   /**
-   * Collection::Record::offset is the offset of the record.
+   * Returns the row that the record belongs too.
+   *
+   * @return size_t
    */
-  const size_t offset;
+  size_t row() const;
+
+  /**
+   * Returns the offset of where the file is located.
+   *
+   * @return size_t
+   */
+  size_t offset() const;
 
   /**
    * Return the field with given key
@@ -49,16 +57,18 @@ public:
   bool eq(Record& other, std::vector<std::string> keys);
   bool neq(Record& other, std::vector<std::string> keys);
   std::string str();
-  std::fstream& write(std::fstream& stream);
+  std::ostream& write(std::ostream& stream);
 private:
+  const size_t row_;
+  const size_t offset_;
+
   Field get(key_pair_t key);
   Field operator[](key_pair_t key);
   Collection& collection;
 
-  friend std::fstream& operator<<(std::fstream& stream, Record& rec);
+  friend std::ostream& operator<<(std::ostream& stream, Record& rec);
 };
 
-std::fstream& operator<<(std::fstream& stream, Record& rec);
-
+std::ostream& operator<<(std::ostream& stream, Record& rec);
 
 #endif
