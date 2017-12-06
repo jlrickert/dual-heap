@@ -123,6 +123,16 @@ string Record::str() {
   return ss.str();
 }
 
+int Record::compare(Record& other, vector<string> keys) {
+  if (this->lt(other, keys)) {
+    return -1;
+  } else if (this->eq(other, keys)) {
+    return 0;
+  } else {
+    return 1;
+  }
+}
+
 bool Record::lt(Record& other, vector<string> keys) {
   for (vector<string>::iterator it = keys.begin(); it != keys.end(); ++it) {
     if (this->get(*it) < other.get(*it)) {

@@ -52,6 +52,7 @@ public:
    */
   Field operator[](std::string key_name);
 
+  int compare(Record& other, std::vector<std::string> keys);
   bool lt(Record& other, std::vector<std::string> keys);
   bool lte(Record& other, std::vector<std::string> keys);
   bool gt(Record& other, std::vector<std::string> keys);

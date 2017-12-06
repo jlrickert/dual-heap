@@ -69,13 +69,14 @@ std::string stringifyVector(std::vector<T>& vec) {
 
   std::ostringstream ss;
   ss << "[";
-  for (size_t i = 0; i < (vec.size() - 1); i += 1) {
+  for (size_t i = 0; i < vec.size() - 1; i += 1) {
     ss << vec[i] << ", ";
   }
   ss << vec[vec.size() - 1];
   ss << "]";
   return ss.str();
 }
+
 
 template <typename T>
 void initialize(T array[], size_t size, T initial = 0) {

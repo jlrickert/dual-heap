@@ -77,13 +77,13 @@ private:
   void seek(size_t pos);
 
   std::fstream& replacement_selection_sort(std::fstream& buffer,
-                                           std::vector<int>& bucket_sizes,
+                                           std::vector<size_t>& bucket_sizes,
                                            std::vector<std::string> keys);
 
   std::fstream& output_keys(std::fstream& output);
 
   std::fstream& kway_merge(std::fstream& buffer, std::fstream& output,
-                           std::vector<int> bucket_sizes,
+                           std::vector<size_t> bucket_sizes,
                            std::vector<std::string> keys);
 
   /**
@@ -102,8 +102,6 @@ private:
    * Generate and index of the csv file
    */
   void init_index();
-
-  void heapify(size_t heap[], size_t size, std::vector<std::string> keys);
 };
 
 #endif

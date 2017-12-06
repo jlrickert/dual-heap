@@ -9,7 +9,7 @@ using namespace std;
 
 BucketManager::BucketManager(Collection& collection,
                             fstream& buffer,
-                            vector<int> bucket_sizes)
+                            vector<size_t> bucket_sizes)
     : collection(collection), sorted_buffer(buffer) {
   this->buckets_ = vector<Bucket>();
   this->bucket_sizes_ = bucket_sizes;
@@ -101,7 +101,7 @@ string BucketManager::buckets_str() {
   return Util::stringifyVector(this->buckets_);
 }
 
-vector<size_t> BucketManager::find_offsets(const vector<int>& bucket_sizes) {
+vector<size_t> BucketManager::find_offsets(const vector<size_t>& bucket_sizes) {
   vector<size_t> bucket_offsets;
   if (bucket_sizes.size() > 0) bucket_offsets.push_back(0);
   unsigned int count = 0;
