@@ -238,7 +238,8 @@ fstream& Collection::kway_merge(fstream& buffer, fstream& output,
 
     Record record = bucket.record();
     output << record << endl;
-    cout << "Writing out " << bucket << endl;
+    cout << "Writing out " << bucket << " " << record.str()[17]
+         << record.str()[18] << endl;
     cout << "Heap updated: " << manager.buckets_str() << endl;
 
     cout << endl;

@@ -19,7 +19,6 @@ Bucket::Bucket(const Bucket& other)
 Bucket& Bucket::operator=(const Bucket& other) {
   if (this != &other) {
     this->rec = other.rec;
-    this->row_ = other.row_;
     this->bucket_number_ = other.bucket_number_;
   }
   return *this;
@@ -33,11 +32,14 @@ size_t Bucket::bucket_number() const {
   return this->bucket_number_;
 }
 
+size_t Bucket::row() const {
+  return this->rec.row();
+}
+
 string Bucket::str() const {
   ostringstream ss;
   ss << "(";
-  ss << this->record().str()[17];
-  ss << this->record().str()[18];
+  ss << this->row();
   ss << ", " << this->bucket_number();
   ss << ")";
   // ss << "Bucket(Row=" << this->record().row()

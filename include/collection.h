@@ -3,15 +3,14 @@
 
 #include <map>
 #include <vector>
+#include "index.h"
 #include "record.h"
 #include "types.h"
-#include "index.h"
 
 class Record;
 
 class Collection {
-public:
-
+ public:
   /**
    * Constructs Collection::Collection, initializes file, keys, and index
    *
@@ -56,7 +55,8 @@ public:
   size_t size() const;
 
   std::string file_name() const;
-private:
+
+ private:
   friend class Record;
   friend class BucketManager;
 

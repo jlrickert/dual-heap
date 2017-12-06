@@ -1,15 +1,14 @@
-#include "sstream"
-#include "bucket.h"
 #include "bucket_manager.h"
+#include "bucket.h"
+#include "sstream"
 
-#include "utilities.h"
 #include "iostream"
+#include "utilities.h"
 
 using namespace std;
 
-BucketManager::BucketManager(Collection& collection,
-                            fstream& buffer,
-                            vector<size_t> bucket_sizes)
+BucketManager::BucketManager(Collection& collection, fstream& buffer,
+                             vector<size_t> bucket_sizes)
     : collection(collection), sorted_buffer(buffer) {
   this->buckets_ = vector<Bucket>();
   this->bucket_sizes_ = bucket_sizes;
@@ -22,22 +21,24 @@ void BucketManager::init() {
     Bucket bucket = this->fetch(i);
     this->buckets_.push_back(bucket);
   }
-  cerr << "DEBUG: initial bucket sizes " << Util::stringifyVector(this->bucket_sizes_) << endl;
-  cerr << "DEBUG: initial bucket offsets " << Util::stringifyVector(this->offsets_) << endl;
-  cerr << "DEBUG: initial bucket cursor positions " << Util::stringifyVector(this->cursors) << endl;
+  cerr << "DEBUG: initial bucket sizes "
+       << Util::stringifyVector(this->bucket_sizes_) << endl;
+  cerr << "DEBUG: initial bucket offsets "
+       << Util::stringifyVector(this->offsets_) << endl;
+  cerr << "DEBUG: initial bucket cursor positions "
+       << Util::stringifyVector(this->cursors) << endl;
   cerr << "DEBUG: initial buckets " << this->buckets_str() << endl;
 }
 
-bool BucketManager::finished() {
-  return this->buckets_.size() == 0;
-}
+bool BucketManager::finished() { return this->buckets_.size() == 0; }
 
 Bucket BucketManager::pop() {
   Bucket bucket = this->buckets_[0];
   this->buckets_[0] = this->buckets_[this->buckets_.size() - 1];
 
   size_t bucket_number = bucket.bucket_number();
-  size_t bucket_end = this->offsets_[bucket_number] + this->bucket_sizes_[bucket_number];
+  size_t bucket_end =
+      this->offsets_[bucket_number] + this->bucket_sizes_[bucket_number];
   if (this->cursors[bucket_number] >= bucket_end) {
     vector<Bucket>::iterator last = this->buckets_.end();
     last -= 1;
@@ -66,7 +67,8 @@ void BucketManager::heapify(vector<string> keys) {
   size_t size = this->buckets_.size();
   if (size <= 1) {
     return;
-  } else if (size <= 2 && this->compare(this->buckets_[1], this->buckets_[0], keys) < 0) {
+  } else if (size <= 2 &&
+             this->compare(this->buckets_[1], this->buckets_[0], keys) < 0) {
     Bucket temp = this->buckets_[0];
     this->buckets_[0] = this->buckets_[1];
     this->buckets_[1] = temp;
@@ -94,7 +96,7 @@ void BucketManager::heapify(vector<string> keys) {
           this->buckets_[i * 2 - 1] = parent;
           done = false;
         } else if (this->compare(right, left, keys) < 0 &&
-                  this->compare(right, parent, keys) < 0) {
+                   this->compare(right, parent, keys) < 0) {
           this->buckets_[i - 1] = right;
           this->buckets_[i * 2] = parent;
           done = false;
