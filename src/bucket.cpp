@@ -18,13 +18,14 @@ Bucket::Bucket(const Bucket& other)
 
 Bucket& Bucket::operator=(const Bucket& other) {
   if (this != &other) {
+    this->rec = other.rec;
     this->row_ = other.row_;
     this->bucket_number_ = other.bucket_number_;
   }
   return *this;
 }
 
-Record Bucket::record() {
+Record Bucket::record() const {
   return this->rec;
 }
 
@@ -32,7 +33,7 @@ size_t Bucket::bucket_number() const {
   return this->bucket_number_;
 }
 
-string Bucket::str() {
+string Bucket::str() const {
   ostringstream ss;
   ss << "Bucket(Row=" << this->record().row()
      << ", Bucket Number=" << this->bucket_number()

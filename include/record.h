@@ -21,6 +21,8 @@ public:
   Record(Collection& collection, size_t row, size_t offset);
   Record(const Record& other);
 
+  Record& operator=(const Record& other);
+
   /**
    * Returns the row that the record belongs too.
    *
@@ -59,8 +61,8 @@ public:
   std::string str();
   std::ostream& write(std::ostream& stream);
 private:
-  const size_t row_;
-  const size_t offset_;
+  size_t row_;
+  size_t offset_;
 
   Field get(key_pair_t key);
   Field operator[](key_pair_t key);

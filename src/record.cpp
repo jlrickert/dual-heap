@@ -15,6 +15,15 @@ Record::Record(const Record& other)
     offset_(other.offset_),
     collection(other.collection) {}
 
+Record& Record::operator=(const Record& other) {
+  if (this != &other) {
+    this->collection = other.collection;
+    this->row_ = other.row();
+    this->offset_ = other.offset();
+  }
+  return *this;
+}
+
 size_t Record::row() const {
   return this->row_;
 }
@@ -168,8 +177,6 @@ ostream& Record::write(ostream& stream) {
     stream << field.str();
     if (i < keys.size() - 1) {
       stream << ',';
-    } else {
-      stream << '\n';
     }
   }
   return stream;

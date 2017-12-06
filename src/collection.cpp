@@ -350,68 +350,19 @@ fstream& Collection::kway_merge(fstream& buffer, fstream& output,
 
   BucketManager manager(*this, buffer, bucket_sizes);
   manager.init();
-  // while (!manager.finished()) {
+
+  while (!manager.finished()) {
     manager.heapify(keys);
-    Record record = manager.pop();
+    cout << "Heapify: " << manager.buckets_str() << endl;
+
+    Bucket bucket = manager.pop();
+
+    Record record = bucket.record();
     output << record << endl;
-    // record.write(output);
-    output.flush();
-    cout << "Writing " << record.str() << endl;
-  // }
-  // manager.init();
+    cout << "Writing out " << bucket << endl;
+    cout << "Heap updated: " << manager.buckets_str() << endl;
 
-  // const size_t bucket_count = bucket_sizes.size();
-  // size_t bucket_cursors[bucket_count];
-  // Util::initialize<size_t>(bucket_cursors, bucket_count, 0);
-  // Bucket* buckets[bucket_count];
-  // size_t size = 0;  // number of buckets in use
-  // vector<unsigned int> bucket_offsets = find_offsets(bucket_sizes);
-
-  // size_t row;
-  // { // initialize bucket
-  //   for (size_t i = 0; i < bucket_count; i += 1) {
-  //     buffer.seekg(bucket_offsets[i] * sizeof(size_t));
-  //     Util::read_raw<size_t>(buffer, row);
-  //     buckets[i] = new Bucket(*this, row, i);
-  //     size += 1;
-  //   }
-  //   cout << "Initialized " << size << " buckets" << endl << endl;
-  // }
-
-  // for (size_t i = 0; i < this->size(); i += 1) {
-  //   this->heapify<Bucket*>(buckets, size, keys);
-  //   cout << "Heapifiy: " << this->stringify(buckets, size) << endl;
-
-  //   Bucket* bucket = buckets[0];
-  //   row = bucket->row();
-  //   this->get(row).write(output);
-  //   output.flush();
-  //   cout << "writing out " << row << endl;
-
-  //   buckets[0] = buckets[size - 1];
-
-  //   size_t bucket_number = bucket->bucket_number();
-  //   bucket_cursors[bucket_number] += 1;
-  //   // if (bucket_sizes[bucket_number] == bucket_cursors[bucket_number]) {
-  //   //   delete buckets[size - 1];
-  //   //   size -= 1;
-  //   // } else {
-  //   //   buffer.seekg(
-  //   //       (bucket_offsets[bucket_number] + bucket_cursors[bucket_number]) *
-  //   //       sizeof(size_t));
-  //   //   Util::read_raw<size_t>(buffer, row);
-  //   //   delete buckets[size - 1];
-  //   //   buckets[size - 1] = new Bucket(*this, row, bucket_number);
-  //   // }
-  // }
-
-  // output.flush();
-  // return output;
+    cout << endl;
+  }
   return output;
 }
-
-// bool Collection::compare(Bucket* a, Bucket* b, vector<string> keys) {
-//   Record rec_a = this->get(a->row());
-//   Record rec_b = this->get(b->row());
-//   return rec_a.lt(rec_b, keys);
-// }

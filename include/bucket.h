@@ -9,9 +9,9 @@ public:
   Bucket(Record record, size_t bucket_number);
   Bucket(const Bucket& other);
   Bucket& operator=(const Bucket& other);
-  Record record();
+  Record record() const;
   size_t bucket_number() const;
-  std::string str();
+  std::string str() const;
 private:
   Record rec;
   size_t row_;
