@@ -52,7 +52,7 @@ void RSSImpl::update(Record& last) {
     this->heap_.erase(it);
     cout << "Deleted: " << this->stringify_heap() << " " << this->heap_.size() << endl;
   }
-  if (this->active_ == 0) {
+  if (this->active_ == 0 || this->heap_.empty()) {
     this->bucket_counts_.push_back(this->bucket_size_);
     this->bucket_size_ = 0;
     this->active_ = this->heap_.size();

@@ -19,7 +19,7 @@ BucketManager::BucketManager(Collection& collection,
 void BucketManager::init() {
   this->cursors = this->offsets_;
   for (size_t i = 0; i < bucket_sizes_.size(); i += 1) {
-    Bucket bucket = fetch(i);
+    Bucket bucket = this->fetch(i);
     this->buckets_.push_back(bucket);
   }
   cerr << "DEBUG: initial bucket sizes " << Util::stringifyVector(this->bucket_sizes_) << endl;
@@ -43,7 +43,7 @@ Bucket BucketManager::pop() {
     last -= 1;
     this->buckets_.erase(last);
   } else {
-    this->buckets_[this->buckets_.size() - 1] = fetch(bucket_number);
+    this->buckets_[this->buckets_.size() - 1] = this->fetch(bucket_number);
   }
 
   return bucket;
@@ -73,25 +73,32 @@ void BucketManager::heapify(vector<string> keys) {
     return;
   }
 
-  for (size_t i = size / 2; i >= 1; i -= 1) {
-    Bucket parent = this->buckets_[i - 1];
-    Bucket left = this->buckets_[i * 2 - 1];
+  bool done = false;
+  while (!done) {
+    done = true;
+    for (size_t i = size / 2; i >= 1; i -= 1) {
+      Bucket parent = this->buckets_[i - 1];
+      Bucket left = this->buckets_[i * 2 - 1];
 
-    if (i * 2 >= size) {
-      if (this->compare(left, parent, keys) < 0) {
-        this->buckets_[i - 1] = left;
-        this->buckets_[i * 2 - 1] = parent;
-      }
-    } else {
-      Bucket right = this->buckets_[i * 2];
-      if (this->compare(left, right, keys) &&
-          this->compare(left, parent, keys) < 0) {
-        this->buckets_[i - 1] = left;
-        this->buckets_[i * 2 - 1] = parent;
-      } else if (this->compare(right, left, keys) < 0 &&
-                 this->compare(right, parent, keys) < 0) {
-        this->buckets_[i - 1] = right;
-        this->buckets_[i * 2] = parent;
+      if (i * 2 >= size) {
+        if (this->compare(left, parent, keys) < 0) {
+          this->buckets_[i - 1] = left;
+          this->buckets_[i * 2 - 1] = parent;
+          done = false;
+        }
+      } else {
+        Bucket right = this->buckets_[i * 2];
+        if (this->compare(left, right, keys) &&
+            this->compare(left, parent, keys) < 0) {
+          this->buckets_[i - 1] = left;
+          this->buckets_[i * 2 - 1] = parent;
+          done = false;
+        } else if (this->compare(right, left, keys) < 0 &&
+                  this->compare(right, parent, keys) < 0) {
+          this->buckets_[i - 1] = right;
+          this->buckets_[i * 2] = parent;
+          done = false;
+        }
       }
     }
   }

@@ -186,25 +186,6 @@ void Collection::sort(string output_file, vector<string> keys) {
   this->replacement_selection_sort(buffer, bucket_sizes, keys);
   this->output_keys(output);
 
-  // { // temporary debugging
-  //   cout << Util::stringifyVector(bucket_sizes) << endl;
-  //   buffer.seekg(0);
-  //   size_t count = 0;
-  //   size_t cursor = 0;
-  //   for (size_t i = 0; i < this->size(); i += 1) {
-  //     size_t row;
-  //     Util::read_raw(buffer, row);
-  //     Record rec = this->get(row);
-  //     cout << rec << endl;
-  //     count += 1;
-  //     if (count >= bucket_sizes[cursor]) {
-  //       cursor += 1;
-  //       count = 0;
-  //       cout << endl;
-  //     }
-  //   }
-  // }
-
   this->kway_merge(buffer, output, bucket_sizes, keys);
 }
 

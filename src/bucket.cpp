@@ -35,9 +35,14 @@ size_t Bucket::bucket_number() const {
 
 string Bucket::str() const {
   ostringstream ss;
-  ss << "Bucket(Row=" << this->record().row()
-     << ", Bucket Number=" << this->bucket_number()
-     << ")";
+  ss << "(";
+  ss << this->record().str()[17];
+  ss << this->record().str()[18];
+  ss << ", " << this->bucket_number();
+  ss << ")";
+  // ss << "Bucket(Row=" << this->record().row()
+  //    << ", BN=" << this->bucket_number()
+  //    << ")";
   return ss.str();
 }
 
