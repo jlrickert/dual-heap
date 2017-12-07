@@ -22,4 +22,6 @@ typedef std::pair<std::string, Tkey> key_pair_t;
  */
 const size_t HEAP_SIZE = 8;
 
+typedef unsigned short row_t;
+
 #endif
