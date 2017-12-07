@@ -2,6 +2,7 @@
 #define INDEX_H
 
 #include <fstream>
+#include "types.h"
 
 class Index {
 public:
@@ -18,7 +19,7 @@ public:
    * @param i
    * @return offset
    */
-  size_t get(size_t i);
+  size_t get(row_t i);
 
   /**
    * Return the offset of record at position i.
@@ -26,7 +27,7 @@ public:
    * @param i
    * @return offset
    */
-  size_t operator[](size_t i);
+  size_t operator[](row_t i);
 
   ~Index();
 
@@ -35,7 +36,7 @@ public:
    *
    * @ return this->size_
    */
-  size_t size() const;
+  row_t size() const;
 private:
   /**
    * Get record count from beginning of file

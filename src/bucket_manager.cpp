@@ -122,9 +122,9 @@ vector<size_t> BucketManager::find_offsets(const vector<size_t>& bucket_sizes) {
 }
 
 Bucket BucketManager::fetch(size_t bucket_number) {
-  size_t row;
-  this->sorted_buffer.seekg(this->cursors[bucket_number] * sizeof(size_t));
-  Util::read_raw<size_t>(this->sorted_buffer, row);
+  row_t row;
+  this->sorted_buffer.seekg(this->cursors[bucket_number] * sizeof(row_t));
+  Util::read_raw<row_t>(this->sorted_buffer, row);
   Record rec(this->collection.get(row));
   Bucket bucket(rec, bucket_number);
   this->cursors[bucket_number] += 1;

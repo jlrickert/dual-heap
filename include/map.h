@@ -6,6 +6,7 @@
 #include <sstream>
 
 /// Example usage
+///
 /// ```
 /// #include "map.h"
 /// int main() {
@@ -17,50 +18,47 @@
 ///       // do something with rnn
 ///
 ///       rrn = index.get("Jill");
-///       // do something with rnn  
+///       // do something with rnn
 ///   } catch (index::KeyError e) {
 ///     cout << "key not found";
 ///   }
-
 /// }
 /// ```
-
 template<typename K, typename V, unsigned int degree = 6>
 class Map {
 public:
-/////////////////////////////////////////////////////////<-START class KeyError
+  /////////////////////////////////////////////////////////<-START class KeyError
   class KeyError : public std::runtime_error {
   public:
-    KeyError(T item) throw() : item(item) {};
+    KeyError(K item) throw() : item(item) {};
 
     //Error thrown when the key is invalid. Prints out what the invalid key is.
-    const char* what() const throw() { 
+    const char* what() const throw() {
         std::ostringstream ss;
         ss << "\"" << item << "\"" << " is not a valid key";
-        return ss.str(); 
+        return ss.str().c_str();
       }
-
   private:
-    T item;
+    K item;
   };
-///////////////////////////////////////////////////////<-END class KeyError
-  
-///////////////////////////////////////////////////////<-START class Map  
+  ///////////////////////////////////////////////////////<-END class KeyError
+
+  ///////////////////////////////////////////////////////<-START class Map
   Map() {
-    this->root = new InnerLeaf();
+    this->root = new LeafNode();
   };
 
-// Overwrites when key already exists
-  void insert(const K& key, V value) throw();
-  
-// Throws an error if the key is invalid or not found.
+  void insert(const K& key, V value) {
+  }
+
+  // Throws an error if the key is invalid or not found.
   V get(const K& key) throw() {
-    throw new KeyError(key) 
+    throw new KeyError(key);
     // Code here
   }
 
-/* Clutter - Pretty much don't need this.
-//If the key is not found, it puts the default in there.  
+  /* Clutter - Pretty much don't need this.
+  //If the key is not found, it puts the default in there.
   V get(const K& key, V default_){
       try {
         return this->get(key);
@@ -76,6 +74,7 @@ public:
 private:
   struct LeafNode {
     K keys[degree];
+    V values[degree];
     size_t num_keys;
     LeafNode* next;
     LeafNode() : num_keys(0) {};

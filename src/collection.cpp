@@ -205,7 +205,7 @@ std::fstream& Collection::replacement_selection_sort(
     cout << "Heapified: " << impl.stringify_heap() << endl;
 
     Record rec = impl.pop();
-    Util::write_raw<size_t>(buffer, rec.row());
+    Util::write_raw<row_t>(buffer, rec.row());
     cout << "Writing row " << rec.row() << " to buffer. peek=" << rec.str()[17]
          << rec.str()[18] << endl;
 

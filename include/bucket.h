@@ -3,6 +3,7 @@
 
 #include "record.h"
 #include "bucket.h"
+#include "types.h"
 
 class Bucket {
 public:
@@ -12,7 +13,7 @@ public:
   Record record() const;
   size_t bucket_number() const;
   std::string str() const;
-  size_t row() const;
+  row_t row() const;
 private:
   Record rec;
   size_t bucket_number_;

@@ -5,7 +5,7 @@
 
 using namespace std;
 
-Record::Record(Collection& collection, size_t row, size_t offset)
+Record::Record(Collection& collection, row_t row, size_t offset)
   : row_(row),
     offset_(offset),
     collection(collection) {}
@@ -24,7 +24,7 @@ Record& Record::operator=(const Record& other) {
   return *this;
 }
 
-size_t Record::row() const {
+row_t Record::row() const {
   return this->row_;
 }
 

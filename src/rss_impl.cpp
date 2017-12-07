@@ -1,6 +1,8 @@
 #include "rss_impl.h"
 #include "iostream"
 
+#include "types.h"
+
 using namespace std;
 
 RSSImpl::RSSImpl(Collection& coll, const vector<string>& keys)
@@ -134,23 +136,8 @@ string RSSImpl::stringify_heap() {
       ss << ", ";
     }
   }
-  // for (size_t i = 0; i < this->active_; i += 1) {
-  //   ss << this->heap_[i].row();
-  //   if (i < this->active_ - 1) {
-  //     ss << ", ";
-  //   }
-  // }
-  // if (this->active_ != this->heap_.size()) {
-  //   ss << " | ";
-  // }
-  // for (size_t i = this->active_; i < this->heap_.size(); i += 1) {
-  //   ss << this->heap_[i].row();
-  //   if (i < this->heap_.size() - 1) {
-  //     ss << ", ";
-  //   }
-  // }
   ss << "]";
   return ss.str();
 }
 
-Record RSSImpl::fetch(size_t i) { return this->coll_.get(i); }
+Record RSSImpl::fetch(row_t i) { return this->coll_.get(i); }

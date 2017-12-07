@@ -32,7 +32,7 @@ size_t Bucket::bucket_number() const {
   return this->bucket_number_;
 }
 
-size_t Bucket::row() const {
+row_t Bucket::row() const {
   return this->rec.row();
 }
 
@@ -42,9 +42,6 @@ string Bucket::str() const {
   ss << this->row();
   ss << ", " << this->bucket_number();
   ss << ")";
-  // ss << "Bucket(Row=" << this->record().row()
-  //    << ", BN=" << this->bucket_number()
-  //    << ")";
   return ss.str();
 }
 

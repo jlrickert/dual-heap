@@ -4,9 +4,10 @@
 #include <vector>
 #include <map>
 
-#include "index.h"
-#include "field.h"
 #include "collection.h"
+#include "field.h"
+#include "index.h"
+#include "types.h"
 
 class Collection;
 
@@ -18,7 +19,7 @@ public:
    * @param collection
    * @param offset
    */
-  Record(Collection& collection, size_t row, size_t offset);
+  Record(Collection& collection, row_t row, size_t offset);
   Record(const Record& other);
 
   Record& operator=(const Record& other);
@@ -28,7 +29,7 @@ public:
    *
    * @return size_t
    */
-  size_t row() const;
+  row_t row() const;
 
   /**
    * Returns the offset of where the file is located.
@@ -62,7 +63,7 @@ public:
   std::string str();
   std::ostream& write(std::ostream& stream);
 private:
-  size_t row_;
+  row_t row_;
   size_t offset_;
 
   Field get(key_pair_t key);

@@ -2,8 +2,10 @@
 #define RSS_IMPL_H
 
 #include <vector>
-#include "record.h"
+
 #include "collection.h"
+#include "record.h"
+#include "types.h"
 
 class RSSImpl {
 public:
@@ -25,7 +27,7 @@ private:
   std::vector<std::string> keys_;
 
   void update(Record& last);
-  Record fetch(size_t i);
+  Record fetch(row_t i);
 };
 
 #endif
