@@ -7,10 +7,36 @@
 #include "record.h"
 #include "types.h"
 
+const size_t DEGREE = 6;
+class SecondaryIndex;
+
+typedef short int p_block_t;
+enum BlockType {
+  NODE,
+  DATA,
+  UNALLOCATED,
+};
+
+struct Header {
+  p_block_t root;
+  p_block_t next_free;
+};
+
+const size_t BLOCK_KEY_LEN = 3;
+
+struct Block {
+  bool allocated;
+  BlockType type;
+  char keys[DEGREE][BLOCK_KEY_LEN];
+  p_block_t next;
+  union {
+    p_block_t blocks[DEGREE];
+    row_t rows[DEGREE];
+  } value;
+};
+
 class SecondaryIndex {
  public:
-  static const size_t DEGREE = 6;
-
   class KeyError : public std::runtime_error {
    public:
     KeyError(std::string item);
@@ -18,39 +44,16 @@ class SecondaryIndex {
     std::string create_error_msg(std::string& str);
   };
 
-  /// build secondary index from a previously cached value;
-  static SecondaryIndex from_cache(std::fstream& col);
-
   SecondaryIndex(Collection& collection, std::string key);
   ~SecondaryIndex();
 
+  Record get(std::string key);
   void insert(size_t row);
   void remove(std::string key);
   std::fstream& cache(std::fstream& stream);
 
+  void rebuild();
  private:
-  typedef short int p_block_t;
-  enum BlockType {
-    NODE,
-    DATA,
-    UNALLOCATED,
-  };
-
-  struct Block {
-    bool allocated;
-    BlockType type;
-    char* keys[SecondaryIndex::DEGREE];
-    p_block_t next;
-    union {
-      p_block_t blocks[DEGREE];
-      row_t rows[DEGREE];
-    } value;
-  };
-
-  struct Header {
-    p_block_t root;
-    p_block_t next_free;
-  };
 
   std::string key_;
   Collection& coll_;
@@ -60,6 +63,13 @@ class SecondaryIndex {
 
   void insert(Record& rec);
   std::fstream* open_index_file(std::string file_name);
+
+  Header read_header();
 };
+
+std::ostream& operator<<(std::ostream& stream, const Block& block);
+std::istream& operator>>(std::istream& stream, Block& block);
+std::ostream& operator<<(std::ostream& stream, const Header& block);
+std::istream& operator>>(std::istream& stream, Header& block);
 
 #endif

@@ -6,7 +6,7 @@
 
 namespace Util {
 template<typename WordSize>
-std::ostream& write_raw(std::ostream& outs, WordSize value) {
+std::iostream& write_raw(std::iostream& outs, WordSize value) {
   for (size_t size = sizeof(WordSize); size; --size, value >>= 8) {
     outs.put((char)(value & 0xFF));
   }
@@ -14,7 +14,7 @@ std::ostream& write_raw(std::ostream& outs, WordSize value) {
 }
 
 template<typename WordSize>
-std::istream& read_raw(std::istream& ins, WordSize& value) {
+std::iostream& read_raw(std::iostream& ins, WordSize& value) {
   value = 0;
   size_t length = sizeof(WordSize);
   for (size_t i = 0; i < length; i++) {
