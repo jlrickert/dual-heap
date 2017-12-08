@@ -11,9 +11,10 @@ const size_t DEGREE = 6;
 class SecondaryIndex;
 
 typedef short int p_block_t;
+
 enum BlockType {
   NODE,
-  DATA,
+  LEAF,
   UNALLOCATED,
 };
 
@@ -50,11 +51,8 @@ class SecondaryIndex {
   Record get(std::string key);
   void insert(size_t row);
   void remove(std::string key);
-  std::fstream& cache(std::fstream& stream);
-
   void rebuild();
  private:
-
   std::string key_;
   Collection& coll_;
   std::fstream* stream_;
@@ -65,6 +63,7 @@ class SecondaryIndex {
   std::fstream* open_index_file(std::string file_name);
 
   Header read_header();
+  void update_header();
 };
 
 std::ostream& operator<<(std::ostream& stream, const Block& block);

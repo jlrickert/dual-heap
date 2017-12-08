@@ -21,26 +21,40 @@ string SecondaryIndex::KeyError::create_error_msg(string& key) {
 SecondaryIndex::SecondaryIndex(Collection& coll, string key)
     : key_(key),
       coll_(coll),
-      stream_(this->open_index_file(coll.file_name())) {}
+      stream_(this->open_index_file(coll.file_name())),
+      header_(read_header()) {
+  this->update_header();
+}
 
 SecondaryIndex::~SecondaryIndex() { delete this->stream_; }
 
 void SecondaryIndex::rebuild() {
-  cout << "rawra" << endl << flush;
-  cout << this->header_ << endl;
-  cout << "rawr" << endl << flush;
+  *this->stream_ << this->header_ << endl;
 }
 
 Header SecondaryIndex::read_header() {
   this->stream_->seekg(0);
   Header h;
-  *this->stream_ >> h;
-  return h;
+  if (this->stream_->peek() != EOF) {
+    *this->stream_ >> h;
+    return h;
+  } else {
+    h.next_free = sizeof(Header) + sizeof(Block);
+    h.root = sizeof(Header);
+    return h;
+  }
+}
+
+void SecondaryIndex::update_header() {
+  this->stream_->seekg(0);
+  *this->stream_ >> this->header_;
 }
 
 fstream* SecondaryIndex::open_index_file(string collection_file_name) {
   fstream* stream = new fstream();
-  stream->open("tmp/rawr", fstream::binary | fstream::in | fstream::out);
+  stream->open("tmp/key_index", fstream::binary | fstream::out);  // this needs to be both read and write
+  *stream << "wassup";
+  cout << stream->good() << endl;
   return stream;
 }
 
@@ -57,7 +71,7 @@ ostream& operator<<(ostream& stream, const Block& block) {
     case NODE: {
       break;
     }
-    case DATA: {
+    case LEAF: {
       break;
     }
     case UNALLOCATED: {
@@ -72,11 +86,13 @@ istream& operator>>(istream& stream, Block& block) {
 }
 
 ostream& operator<<(ostream& stream, const Header& header) {
-  stream << header;
+  stream << header.root;
+  stream << header.next_free;
   return stream;
 }
 
 istream& operator>>(istream& stream, Header& header) {
-  stream >> header;
+  stream >> header.root;
+  stream >> header.next_free;
   return stream;
 }
