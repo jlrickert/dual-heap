@@ -2,6 +2,19 @@
 
 Dual Heap project
 
+# Temporary quick start
+
+This assumes a unix system with standard tools such as gnu-make, and gcc
+
+Build by running
+```
+make build
+```
+
+Run by running `./bin/dual_heap`
+
+Program behavior is easy to change in dual_heap.cpp and rebuilding.
+
 # Building Project
 
 ```
