@@ -11,7 +11,7 @@ const size_t DEGREE = 6;
 class SecondaryIndex;
 
 typedef unsigned short p_block_t;
-typedef char meta_t;
+typedef unsigned short meta_t;
 
 enum BlockType {
   NODE,
@@ -48,8 +48,11 @@ class Block {
 
   BlockType type() const;
   bool allocated() const;
+  p_block_t get_offset() const;
+  void set_offset(p_block_t offset);
 
  private:
+  p_block_t offset_;
 };
 
 class SecondaryIndex {
@@ -65,7 +68,7 @@ class SecondaryIndex {
   SecondaryIndex(Collection& collection, std::string key);
   ~SecondaryIndex();
 
-  Record get(std::string key) throw();
+  Record get(Field field) throw();
   void insert(Record rec);
   void remove(std::string key);
   Header rebuild();
@@ -80,10 +83,14 @@ class SecondaryIndex {
   std::fstream* open_index_file(std::string key_name);
   Block traverse(Block root, std::string key);
 
+  void insert_into_unfull_leaf(Block& leaf, Record record);
+  void insert_into_full_leaf(Block& leaf, Record record);
+
+
   Header read_header();
   void update_header();
   Block read_block(p_block_t offset);
-  p_block_t update_block(p_block_t offset, const Block& block);
+  p_block_t update_block(const Block& block);
 };
 
 std::ostream& operator<<(std::ostream& stream, const Block& block);
