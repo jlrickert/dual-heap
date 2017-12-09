@@ -128,7 +128,7 @@ SecondaryIndex::~SecondaryIndex() { delete this->stream_; }
 
 Record SecondaryIndex::get(Field field) throw() {
   string key = field.str();
-  Block leaf = this->traverse(this->root_, key);
+  Block leaf = this->traverse(this->root(), key);
 
   bool ok = true;
   while (ok) {
@@ -159,15 +159,16 @@ void SecondaryIndex::insert(Record rec) {
   cout << "Inserting record " << row << " with key " << key << " into \""
        << this->key_ << "\" index" << endl;
 
-  Block leaf = this->traverse(this->root_, key_);
+  Block root = this->root();
+  Block leaf = this->traverse(root, key);
 
   while (true) {
-    // size_t i = 0;
     for (size_t i = 0; i < DEGREE; i += 1) {
       if (i < (size_t)leaf.items) {
         if (key < leaf.keys[i]) {
           if (i < DEGREE - 1) {
             this->insert_into_unfull_leaf(leaf, rec);
+            return;
           } else if (i == DEGREE - 1) {
             this->insert_into_full_leaf(leaf, rec);
             return;
@@ -186,11 +187,17 @@ void SecondaryIndex::insert(Record rec) {
   }
 }
 
+Block SecondaryIndex::root() {
+  Block block = this->read_block(this->header_.root);
+  return block;
+}
+
 void SecondaryIndex::insert_into_unfull_leaf(Block& leaf, Record record) {
   string key = record.get(this->key_).str();
-  cout << "DEBUG: inserting into unfull leaf" << endl;
+  cout << "DEBUG: inserting " << key << "into unfull leaf" << endl;
   string tmp_key = key;
   row_t tmp_row = record.row();
+  cout << "Begin " << leaf << endl << flush;
   for (size_t i = 0; i < (size_t)leaf.items; i += 1) {
     if (tmp_key < leaf.keys[i]) {
       {
@@ -208,6 +215,7 @@ void SecondaryIndex::insert_into_unfull_leaf(Block& leaf, Record record) {
   leaf.keys[(size_t)leaf.items] = tmp_key;
   leaf.value.rows[(size_t)leaf.items] = tmp_row;
   leaf.items += 1;
+  cout << "End " << leaf << endl << flush;
   update_block(leaf);
 }
 
@@ -228,9 +236,9 @@ Header SecondaryIndex::rebuild() {
   cout << "Creating new root node" << endl;
   vector<string> keys;
   vector<row_t> rows;
-  this->root_ = Block::new_leaf(keys, rows, -1, -1);
-  this->root_.set_offset(this->header_.root);
-  p_block_t next = update_block(this->root_);
+  Block root = Block::new_leaf(keys, rows, -1, -1);
+  root.set_offset(this->header_.root);
+  p_block_t next = update_block(root);
   this->header_.next_free = next;
   this->update_header();
 
@@ -382,7 +390,15 @@ Block SecondaryIndex::traverse(Block root, std::string key) {
     return root;
   }
   for (size_t i = 0; i < (size_t)root.items; i += 1) {
-    if (key <= root.keys[i]) {
+    bool is_equal = true;
+    for (size_t j = 0; j < BLOCK_KEY_LEN; j += 1) {
+      if (key[j] != root.keys[i][j]) {
+        is_equal = false;
+        break;
+      }
+    }
+
+    if (is_equal || key < root.keys[i]) {
       p_block_t offset = root.value.blocks[i];
       Block b = read_block(offset);
       b.set_offset(offset);

@@ -78,7 +78,8 @@ class SecondaryIndex {
   Collection& coll_;
   std::fstream* stream_;
   Header header_;
-  Block root_;
+
+  Block root();
 
   std::fstream* open_index_file(std::string key_name);
   Block traverse(Block root, std::string key);
