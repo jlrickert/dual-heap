@@ -52,7 +52,7 @@ class Collection {
    *
    * @return count of records
    */
-  size_t size() const;
+  row_t size() const;
 
   std::string file_name() const;
 

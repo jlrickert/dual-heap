@@ -11,6 +11,7 @@ const size_t DEGREE = 6;
 class SecondaryIndex;
 
 typedef unsigned short p_block_t;
+typedef char meta_t;
 
 enum BlockType {
   NODE,
@@ -25,15 +26,28 @@ struct Header {
 
 const size_t BLOCK_KEY_LEN = 3;
 
-struct Block {
-  bool allocated;
-  BlockType type;
-  char keys[DEGREE][BLOCK_KEY_LEN];
+class Block {
+public:
+  static Block new_node(std::vector<std::string> keys,
+                        std::vector<p_block_t> blocks);
+  static Block new_leaf(std::vector<std::string> keys, std::vector<row_t> rows,
+                        p_block_t next);
+  static Block new_unallocated(p_block_t next);
+
+  Block& operator=(const Block& other);
+
+  meta_t meta;
   p_block_t next;
+  char items;
+  std::string keys[DEGREE];
   union {
     p_block_t blocks[DEGREE];
     row_t rows[DEGREE];
   } value;
+
+  BlockType type() const;
+  bool allocated() const;
+private:
 };
 
 class SecondaryIndex {
@@ -41,6 +55,7 @@ class SecondaryIndex {
   class KeyError : public std::runtime_error {
    public:
     KeyError(std::string item);
+
    private:
     std::string create_error_msg(std::string& str);
   };
@@ -49,28 +64,27 @@ class SecondaryIndex {
   ~SecondaryIndex();
 
   Record get(std::string key);
-  void insert(size_t row);
+  void insert(const Record& rec);
   void remove(std::string key);
-  void rebuild();
+  Header rebuild();
+
  private:
   std::string key_;
   Collection& coll_;
   std::fstream* stream_;
   Header header_;
-  Block root_;
+  Block cursor_;
 
-  void insert(Record& rec);
   std::fstream* open_index_file(std::string key_name);
 
   Header read_header();
-  void update_header(Header header);
-  void update_block(p_block_t offset, Block block);
+  void update_header();
   Block read_block(p_block_t offset);
+  p_block_t update_block(p_block_t offset, const Block& block);
 };
 
 std::ostream& operator<<(std::ostream& stream, const Block& block);
-std::istream& operator>>(std::istream& stream, Block& block);
+std::ostream& operator<<(std::ostream& stream, const BlockType& type);
 std::ostream& operator<<(std::ostream& stream, const Header& block);
-std::istream& operator>>(std::istream& stream, Header& block);
 
 #endif

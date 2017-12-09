@@ -118,7 +118,7 @@ Record Collection::get(size_t row) {
 
 Record Collection::operator[](size_t row) { return this->get(row); }
 
-size_t Collection::size() const { return this->index->size(); }
+row_t Collection::size() const { return this->index->size(); }
 
 string Collection::file_name() const { return this->file_name_; }
 
