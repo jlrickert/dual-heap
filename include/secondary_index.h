@@ -63,7 +63,7 @@ class SecondaryIndex {
   SecondaryIndex(Collection& collection, std::string key);
   ~SecondaryIndex();
 
-  Record get(std::string key);
+  Record get(std::string key) throw();
   void insert(const Record& rec);
   void remove(std::string key);
   Header rebuild();
@@ -76,6 +76,7 @@ class SecondaryIndex {
   Block cursor_;
 
   std::fstream* open_index_file(std::string key_name);
+  Block traverse(Block root, std::string key);
 
   Header read_header();
   void update_header();

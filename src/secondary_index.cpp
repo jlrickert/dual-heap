@@ -118,8 +118,16 @@ SecondaryIndex::SecondaryIndex(Collection& coll, string key)
 
 SecondaryIndex::~SecondaryIndex() { delete this->stream_; }
 
-Record SecondaryIndex::get(string key) {
-  return this->coll_.get(0);
+Record SecondaryIndex::get(string key) throw() {
+  Block root = read_block(this->header_.root);
+  Block leaf = this->traverse(root, key);
+  for (size_t i = 0; i < (size_t)leaf.items; i += 1) {
+    if (leaf.keys[i] == key) {
+      row_t row = leaf.value.rows[i];
+      return this->coll_.get(row);
+    }
+  }
+  throw KeyError(key);
 }
 
 void SecondaryIndex::insert(const Record& rec) {
@@ -252,6 +260,19 @@ fstream* SecondaryIndex::open_index_file(string key_name) {
     cout << "Creating new " << key_name << " index" << endl << flush;
   }
   return stream;
+}
+
+Block SecondaryIndex::traverse(Block root, std::string key) {
+  if (root.type() == LEAF) {
+    return root;
+  }
+  for (size_t i = 0; i < (size_t)root.items; i += 1) {
+    if (key <= root.keys[i]) {
+      p_block_t offset = root.value.blocks[i];
+      return read_block(offset);
+    }
+  }
+  throw runtime_error("A node must have a value");
 }
 
 ostream& operator<<(ostream& stream, const BlockType& type) {
