@@ -24,19 +24,20 @@ struct Header {
   p_block_t next_free;
 };
 
-const size_t BLOCK_KEY_LEN = 3;
+const size_t BLOCK_KEY_LEN = 10;
 
 class Block {
-public:
-  static Block new_node(std::vector<std::string> keys,
+ public:
+  static Block new_node(std::vector<std::string> keys, p_block_t parent,
                         std::vector<p_block_t> blocks);
   static Block new_leaf(std::vector<std::string> keys, std::vector<row_t> rows,
-                        p_block_t next);
+                        p_block_t parent, p_block_t next);
   static Block new_unallocated(p_block_t next);
 
   Block& operator=(const Block& other);
 
   meta_t meta;
+  p_block_t parent;
   p_block_t next;
   char items;
   std::string keys[DEGREE];
@@ -47,7 +48,8 @@ public:
 
   BlockType type() const;
   bool allocated() const;
-private:
+
+ private:
 };
 
 class SecondaryIndex {
@@ -64,7 +66,7 @@ class SecondaryIndex {
   ~SecondaryIndex();
 
   Record get(std::string key) throw();
-  void insert(const Record& rec);
+  void insert(Record rec);
   void remove(std::string key);
   Header rebuild();
 
@@ -73,7 +75,7 @@ class SecondaryIndex {
   Collection& coll_;
   std::fstream* stream_;
   Header header_;
-  Block cursor_;
+  Block root_;
 
   std::fstream* open_index_file(std::string key_name);
   Block traverse(Block root, std::string key);

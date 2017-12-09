@@ -18,13 +18,15 @@ string SecondaryIndex::KeyError::create_error_msg(string& key) {
   return ss.str().c_str();
 }
 
-Block Block::new_node(vector<string> keys, vector<p_block_t> blocks) {
+Block Block::new_node(vector<string> keys, p_block_t parent,
+                      vector<p_block_t> blocks) {
   Block block;
   block.meta = 0x0;
   block.meta |= 1 << (sizeof(meta_t) * 8 - 1);  // set most significant bit to 1
   block.meta |= NODE;
 
-  block.next = 0;
+  block.parent = parent;
+  block.next = -1;
   block.items = (char)keys.size();
   for (size_t i = 0; i < DEGREE; i += 1) {
     for (size_t j = 0; j < BLOCK_KEY_LEN; j += 1) {
@@ -45,12 +47,14 @@ Block Block::new_node(vector<string> keys, vector<p_block_t> blocks) {
   return block;
 }
 
-Block Block::new_leaf(vector<string> keys, vector<row_t> rows, p_block_t next) {
+Block Block::new_leaf(vector<string> keys, vector<row_t> rows, p_block_t parent,
+                      p_block_t next) {
   Block block;
   block.meta = 0x0;
   block.meta |= 1 << (sizeof(meta_t) * 8 - 1);  // set most significant bit to 1
   block.meta |= LEAF;
 
+  block.parent = parent;
   block.next = next;
   block.items = (char)keys.size();
 
@@ -101,9 +105,7 @@ Block& Block::operator=(const Block& other) {
   return *this;
 }
 
-BlockType Block::type() const {
-  return (BlockType)(this->meta & 0xF);
-}
+BlockType Block::type() const { return (BlockType)(this->meta & 0xF); }
 
 bool Block::allocated() const {
   size_t bit_position = 1 << ((sizeof(meta_t)) * 8 - 1);
@@ -119,23 +121,54 @@ SecondaryIndex::SecondaryIndex(Collection& coll, string key)
 SecondaryIndex::~SecondaryIndex() { delete this->stream_; }
 
 Record SecondaryIndex::get(string key) throw() {
-  Block root = read_block(this->header_.root);
-  Block leaf = this->traverse(root, key);
-  for (size_t i = 0; i < (size_t)leaf.items; i += 1) {
-    if (leaf.keys[i] == key) {
-      row_t row = leaf.value.rows[i];
-      return this->coll_.get(row);
+  Block leaf = this->traverse(this->root_, key);
+
+  bool ok = true;
+  while (ok) {
+    for (size_t i = 0; i < (size_t)leaf.items; i += 1) {
+      if (leaf.keys[i] == key) {
+        continue;
+      } else if (leaf.keys[i] == key) {
+        row_t row = leaf.value.rows[i];
+        return this->coll_.get(row);
+      } else {
+        ok = false;
+        break;
+      }
+    }
+    if (leaf.next != (typeof(leaf.next))(-1)) {
+      leaf = read_block(leaf.next);
+    } else {
+      ok = false;
     }
   }
   throw KeyError(key);
 }
 
-void SecondaryIndex::insert(const Record& rec) {
+void SecondaryIndex::insert(Record rec) {
   row_t row = rec.row();
+  string key = rec.get(this->key_).str();
+
+  cout << "Inserting record " << row << " with key " << key << " into \""
+       << this->key_ << "\" index" << endl;
+
+  Block leaf = this->traverse(this->root_, key_);
+  for (size_t i = 0; i < DEGREE; i += 1) {
+    if (i < (size_t)leaf.items && key < leaf.keys[i]) {
+      if (i < (size_t)leaf.items) {
+        // insert between node
+      } else if (i == (DEGREE - 1)) {
+        // need to split
+      } else {
+        string tmp = leaf.keys[i];
+        leaf.keys[i] = key;
+        leaf.keys[i + 1] = tmp;
+      }
+    }
+  }
 }
 
-void SecondaryIndex::remove(string key) {
-}
+void SecondaryIndex::remove(string key) {}
 
 Header SecondaryIndex::rebuild() {
   cout << "Rebuilding index" << endl;
@@ -148,20 +181,15 @@ Header SecondaryIndex::rebuild() {
   cout << "DEBUG: Creating new root node" << endl;
   vector<string> keys;
   vector<row_t> rows;
-  Block block = Block::new_leaf(keys, rows, -1);
-  cout << block << endl;
-  this->cursor_ = block;
-  cout << this->cursor_ << endl;
-
-  p_block_t next = update_block(this->header_.root, this->cursor_);
+  this->root_ = Block::new_leaf(keys, rows, -1, -1);
+  p_block_t next = update_block(this->header_.root, this->root_);
   this->header_.next_free = next;
-
   this->update_header();
 
-  for (row_t i = 0; i < this->coll_.size(); i += 1) {
-    Record rec = this->coll_.get(i);
-    this->insert(rec);
-  }
+  // for (row_t i = 0; i < this->coll_.size(); i += 1) {
+  //   Record rec = this->coll_.get(i);
+  //   this->insert(rec);
+  // }
 
   return this->header_;
 }
@@ -196,6 +224,7 @@ Block SecondaryIndex::read_block(p_block_t offset) {
   this->stream_->seekg(offset);
   Util::read_raw<char>(*this->stream_, block.meta);
   BlockType type = (BlockType)(block.meta & 0xF);
+  Util::read_raw<p_block_t>(*this->stream_, block.parent);
   Util::read_raw<p_block_t>(*this->stream_, block.next);
   Util::read_raw<char>(*this->stream_, block.items);
   for (size_t i = 0; i < DEGREE; i += 1) {
@@ -220,6 +249,7 @@ p_block_t SecondaryIndex::update_block(p_block_t offset, const Block& block) {
 
   this->stream_->seekp(offset);
   Util::write_raw<char>(*this->stream_, block.meta);
+  Util::write_raw<p_block_t>(*this->stream_, block.parent);
   Util::write_raw<p_block_t>(*this->stream_, block.next);
   Util::write_raw<char>(*this->stream_, block.items);
   for (size_t i = 0; i < DEGREE; i += 1) {
@@ -227,7 +257,8 @@ p_block_t SecondaryIndex::update_block(p_block_t offset, const Block& block) {
       if (type == NODE) {
         Util::write_raw<row_t>(*this->stream_, (row_t)block.value.blocks[i]);
       } else {
-        Util::write_raw<p_block_t>(*this->stream_, (p_block_t)block.value.blocks[i]);
+        Util::write_raw<p_block_t>(*this->stream_,
+                                   (p_block_t)block.value.blocks[i]);
       }
     }
   }

@@ -13,6 +13,8 @@ int main(int argc, char** argv) {
   Collection collection("test/fixtures/data1.csv");
   SecondaryIndex full_name_index(collection, collection.keys()[0]);
   full_name_index.rebuild();
+  full_name_index.insert(collection.get(69));
+  cout << full_name_index.get("Candelario Ledner").row();
   // vector<string> keys;
   // // keys.push_back("Email");
   // keys.push_back("Full Name");
