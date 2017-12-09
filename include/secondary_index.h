@@ -10,7 +10,7 @@
 const size_t DEGREE = 6;
 class SecondaryIndex;
 
-typedef short int p_block_t;
+typedef unsigned short p_block_t;
 
 enum BlockType {
   NODE,
@@ -60,10 +60,12 @@ class SecondaryIndex {
   Block root_;
 
   void insert(Record& rec);
-  std::fstream* open_index_file(std::string file_name);
+  std::fstream* open_index_file(std::string key_name);
 
   Header read_header();
-  void update_header();
+  void update_header(Header header);
+  void update_block(p_block_t offset, Block block);
+  Block read_block(p_block_t offset);
 };
 
 std::ostream& operator<<(std::ostream& stream, const Block& block);

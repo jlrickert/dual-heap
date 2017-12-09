@@ -1,10 +1,9 @@
-// #include "simple.h"
 #include <string>
 #include <iostream>
+
 #include "collection.h"
 #include "utilities.h"
 #include "secondary_index.h"
-
 
 using namespace std;
 
