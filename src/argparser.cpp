@@ -85,7 +85,18 @@ void ArgParser::parse() {
       break;
     }
     case KEYS: {
-      this->keys_.push_back("keys");
+      ostringstream ss;
+      for (string::iterator ch = arg.begin(); ch != arg.end(); ch += 1) {
+        if (*ch != ',') {
+          ss << *ch;
+        } else {
+          this->keys_.push_back(ss.str());
+          ss.str("");
+          ss.clear();
+        }
+      }
+      this->keys_.push_back(ss.str());
+
       state = DEFAULT;
       break;
     }
