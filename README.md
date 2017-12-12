@@ -11,9 +11,7 @@ Build by running
 make build
 ```
 
-Run by running `./bin/dual_heap`
-
-Program behavior is easy to change in dual_heap.cpp and rebuilding.
+Run by running `./bin/dual_heap test/fixitures/data.1.csv -o tmp/sorted.csv -k "Full Name,Id"`
 
 # Building Project
 
